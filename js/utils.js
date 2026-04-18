@@ -46,12 +46,12 @@ const ArenaUtils = (() => {
    * @returns {Function}
    */
   function debounce(fn, ms = 300) {
-    let timer;
-    return (...args) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => fn.apply(this, args), ms);
-    };
-  }
+  let timer;
+  return function (...args) {          // ← was: (...args) =>
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
 
   /**
    * Generate a random ID string.
