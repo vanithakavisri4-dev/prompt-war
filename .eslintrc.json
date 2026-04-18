@@ -1,0 +1,36 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "script"
+  },
+  "globals": {
+    "ArenaUtils": "readonly",
+    "CrowdEngine": "readonly",
+    "FlowOptimizer": "readonly",
+    "GeminiService": "readonly",
+    "MapsService": "readonly",
+    "FirebaseService": "readonly",
+    "AccessibilityService": "readonly",
+    "GoogleCloudService": "readonly",
+    "App": "readonly",
+    "firebase": "readonly",
+    "gtag": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-undef": "error",
+    "no-console": "off",
+    "eqeqeq": "error",
+    "curly": ["error", "multi-line"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "strict": ["error", "function"],
+    "no-var": "error",
+    "prefer-const": "warn"
+  }
+}

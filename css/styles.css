@@ -1,13 +1,47 @@
-/* ArenaFlow AI — Design System */
+/**
+ * ArenaFlow AI — Design System
+ * Version: 2.0.0
+ *
+ * Table of Contents:
+ * 1. Design Tokens (CSS Custom Properties)
+ * 2. Theme Overrides (Light, High Contrast)
+ * 3. Base / Reset
+ * 4. Accessibility Helpers
+ * 5. Glass Panel Component
+ * 6. Loading Screen
+ * 7. Modal / Onboarding
+ * 8. Form Elements
+ * 9. App Shell Layout
+ * 10. Sidebar Navigation
+ * 11. Top Bar
+ * 12. Cards
+ * 13. Dashboard Grid & Stats
+ * 14. Heatmap & Predictions
+ * 15. Quick Actions
+ * 16. Flow Timeline
+ * 17. Live Map
+ * 18. Chat / AI Concierge
+ * 19. Social Sync
+ * 20. Alerts
+ * 21. Settings
+ * 22. Emergency Overlay
+ * 23. Toast Notifications
+ * 24. Responsive Breakpoints
+ * 25. Reduced Motion
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   1. Design Tokens
+   ═══════════════════════════════════════════════════════════════ */
 :root {
   --bg-primary: #0a0e1a;
   --bg-secondary: #111827;
-  --bg-card: rgba(17,24,39,.65);
-  --glass-border: rgba(108,99,255,.18);
+  --bg-card: rgba(17, 24, 39, 0.65);
+  --glass-border: rgba(108, 99, 255, 0.18);
   --glass-blur: 18px;
   --accent: #6c63ff;
   --accent2: #00d4ff;
-  --accent-gradient: linear-gradient(135deg,#6c63ff,#00d4ff);
+  --accent-gradient: linear-gradient(135deg, #6c63ff, #00d4ff);
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -15,17 +49,32 @@
   --text-muted: #94a3b8;
   --radius: 14px;
   --sidebar-w: 230px;
-  --font: 'Inter',system-ui,sans-serif;
-  --mono: 'JetBrains Mono',monospace;
+  --font: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
   --font-scale: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   2. Theme Overrides
+   ═══════════════════════════════════════════════════════════════ */
 [data-theme="light"] {
-  --bg-primary:#f0f2f5;--bg-secondary:#fff;--bg-card:rgba(255,255,255,.75);
-  --glass-border:rgba(108,99,255,.15);--text:#1e293b;--text-muted:#64748b;
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #fff;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(108, 99, 255, 0.15);
+  --text: #1e293b;
+  --text-muted: #64748b;
 }
+
 [data-theme="high-contrast"] {
-  --bg-primary:#000;--bg-secondary:#111;--bg-card:rgba(0,0,0,.9);
-  --glass-border:#fff;--text:#fff;--text-muted:#ddd;--accent:#ffff00;--accent2:#00ffff;
+  --bg-primary: #000;
+  --bg-secondary: #111;
+  --bg-card: rgba(0, 0, 0, 0.9);
+  --glass-border: #fff;
+  --text: #fff;
+  --text-muted: #ddd;
+  --accent: #ffff00;
+  --accent2: #00ffff;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:calc(16px * var(--font-scale));scroll-behavior:smooth}

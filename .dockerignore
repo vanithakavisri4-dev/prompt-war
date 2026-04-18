@@ -1,4 +1,12 @@
 .git
-.gitignore
+.github
+.editorconfig
+.eslintrc.json
+jsconfig.json
+node_modules
+tests
 README.md
-tests/
+CONTRIBUTING.md
+LICENSE
+package.json
+*.md

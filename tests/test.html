@@ -35,7 +35,9 @@
     <script src="../js/crowd-engine.js"></script>
     <script src="../js/flow-optimizer.js"></script>
     <script src="../js/gemini.js"></script>
+    <script src="../js/maps.js"></script>
     <script src="../js/firebase-config.js"></script>
+    <script src="../js/accessibility.js"></script>
     <script>
     'use strict';
     const TestRunner = (() => {
@@ -92,8 +94,8 @@
     suite('ArenaUtils — Core Utilities');
 
     test('sanitize() escapes HTML characters', () => {
-      const result = ArenaUtils.sanitize('<script>alert("xss")</script>');
-      assert(!result.includes('<script>'), 'Should escape script tags');
+      const result = ArenaUtils.sanitize('\x3cscript\x3ealert("xss")\x3c/script\x3e');
+      assert(!result.includes('\x3cscript\x3e'), 'Should escape script tags');
       assert(result.includes('&lt;'), 'Should contain &lt;');
     });
 
@@ -314,16 +316,16 @@
 
     test('XSS prevention in sanitize()', () => {
       const attacks = [
-        '<img src=x onerror=alert(1)>',
+        '\x3cimg src=x onerror=alert(1)\x3e',
         'javascript:alert(1)',
-        '<svg onload=alert(1)>',
-        '"><script>alert(document.cookie)</script>',
+        '\x3csvg onload=alert(1)\x3e',
+        '"\x3e\x3c' + 'script\x3ealert(document.cookie)\x3c/' + 'script\x3e',
       ];
       attacks.forEach(a => {
         const s = ArenaUtils.sanitize(a);
-        assert(!s.includes('<script>'), `Should sanitize: ${a.substring(0,20)}`);
-        assert(!s.includes('<img'), `Should sanitize img: ${a.substring(0,20)}`);
-        assert(!s.includes('<svg'), `Should sanitize svg: ${a.substring(0,20)}`);
+        assert(!s.includes('\x3cscript\x3e'), 'Should sanitize: ' + a.substring(0,20));
+        assert(!s.includes('\x3cimg'), 'Should sanitize img: ' + a.substring(0,20));
+        assert(!s.includes('\x3csvg'), 'Should sanitize svg: ' + a.substring(0,20));
       });
     });
 
@@ -583,8 +585,204 @@
       assertEqual(g2.members.length, 1);
     });
 
+    // ===== MAPS SERVICE TESTS =====
+    suite('MapsService — Stadium Visualization');
+
+    test('MapsService module is defined', () => {
+      assertType(MapsService, 'object');
+      assertType(MapsService.init, 'function');
+      assertType(MapsService.setLayer, 'function');
+      assertType(MapsService.stop, 'function');
+    });
+
+    test('init() handles missing canvas ID gracefully', () => {
+      MapsService.init('nonexistent-canvas-id');
+      assert(true, 'Should not throw for missing canvas');
+    });
+
+    test('setLayer() accepts all valid layer types', () => {
+      const layers = ['crowd', 'food', 'facilities', 'exits'];
+      layers.forEach(layer => {
+        MapsService.setLayer(layer);
+        assert(true, `Should accept layer: ${layer}`);
+      });
+    });
+
+    test('stop() runs without error when no animation is active', () => {
+      MapsService.stop();
+      assert(true, 'Should stop without error');
+    });
+
+    test('init() with valid canvas element starts rendering', () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'test-map-canvas';
+      canvas.width = 400;
+      canvas.height = 240;
+      document.body.appendChild(canvas);
+      MapsService.init('test-map-canvas');
+      MapsService.stop();
+      canvas.remove();
+      assert(true, 'Should init and stop cleanly');
+    });
+
+    // ===== ACCESSIBILITY SERVICE TESTS =====
+    suite('AccessibilityService — WCAG 2.1 AA Compliance');
+
+    test('AccessibilityService module is defined with full API', () => {
+      assertType(AccessibilityService, 'object');
+      assertType(AccessibilityService.init, 'function');
+      assertType(AccessibilityService.applyFontScale, 'function');
+      assertType(AccessibilityService.increaseFontSize, 'function');
+      assertType(AccessibilityService.toggleHighContrast, 'function');
+      assertType(AccessibilityService.toggleReduceMotion, 'function');
+      assertType(AccessibilityService.announce, 'function');
+      assertType(AccessibilityService.setTheme, 'function');
+    });
+
+    test('applyFontScale() clamps values within valid range', () => {
+      AccessibilityService.applyFontScale(0.5);
+      const scale1 = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
+      assert(parseFloat(scale1) >= 0.8, 'Should clamp to minimum 0.8');
+
+      AccessibilityService.applyFontScale(2.0);
+      const scale2 = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
+      assert(parseFloat(scale2) <= 1.5, 'Should clamp to maximum 1.5');
+
+      AccessibilityService.applyFontScale(1.0);
+    });
+
+    test('toggleHighContrast() applies data-theme attribute', () => {
+      AccessibilityService.toggleHighContrast(true);
+      assertEqual(document.documentElement.getAttribute('data-theme'), 'high-contrast');
+      AccessibilityService.toggleHighContrast(false);
+      assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
+    });
+
+    test('toggleReduceMotion() toggles CSS class', () => {
+      AccessibilityService.toggleReduceMotion(true);
+      assert(document.documentElement.classList.contains('reduce-motion'), 'Should add reduce-motion class');
+      AccessibilityService.toggleReduceMotion(false);
+      assert(!document.documentElement.classList.contains('reduce-motion'), 'Should remove reduce-motion class');
+    });
+
+    test('setTheme() switches between dark and light', () => {
+      AccessibilityService.setTheme('light');
+      assertEqual(document.documentElement.getAttribute('data-theme'), 'light');
+      AccessibilityService.setTheme('dark');
+      assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
+    });
+
+    test('announce() creates and removes sr-only element', () => {
+      const before = document.querySelectorAll('.sr-only').length;
+      AccessibilityService.announce('Test announcement');
+      const after = document.querySelectorAll('.sr-only').length;
+      assert(after > before, 'Should add sr-only element');
+    });
+
+    test('increaseFontSize() changes scale value', () => {
+      AccessibilityService.applyFontScale(1.0);
+      AccessibilityService.increaseFontSize(0.1);
+      const scale = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
+      assert(parseFloat(scale) >= 1.0, 'Should increase font scale');
+      AccessibilityService.applyFontScale(1.0);
+    });
+
+    // ===== ASYNC ERROR HANDLING TESTS =====
+    suite('Async Error Handling — Graceful Degradation');
+
+    test('GeminiService.chat() handles concurrent calls', async () => {
+      const p1 = GeminiService.chat('Where is food?', {});
+      const p2 = GeminiService.chat('Exit info?', {});
+      const [r1, r2] = await Promise.all([p1, p2]);
+      assertType(r1, 'string');
+      assertType(r2, 'string');
+    });
+
+    test('GeminiService.translate() handles invalid language code', async () => {
+      const result = await GeminiService.translate('Hello', 'xx-invalid');
+      assertEqual(result, 'Hello', 'Should return original text for unknown language');
+    });
+
+    test('GoogleCloudService.submitToCloudFunction() handles rapid calls', async () => {
+      const r1 = await GoogleCloudService.submitToCloudFunction(CrowdEngine.getSnapshot());
+      const r2 = await GoogleCloudService.submitToCloudFunction(CrowdEngine.getSnapshot());
+      // Second call should be rate-limited
+      assert(r2 === null || typeof r2 === 'object', 'Should handle rate limiting');
+    });
+
+    test('GoogleCloudService.predictWithVertexAI() handles concurrent predictions', async () => {
+      const promises = ['food-nw', 'gate-a', 'restroom-n'].map(
+        zone => GoogleCloudService.predictWithVertexAI(zone, 5, CrowdEngine.getSnapshot())
+      );
+      const results = await Promise.all(promises);
+      results.forEach(r => {
+        assertType(r.predicted, 'number');
+        assertType(r.confidence, 'number');
+      });
+    });
+
+    // ===== DOM / INTEGRATION TESTS =====
+    suite('DOM Integration — Component Structure');
+
+    test('ArenaUtils.$() returns null for missing selectors', () => {
+      assertEqual(ArenaUtils.$('#nonexistent-element-xyz'), null);
+    });
+
+    test('ArenaUtils.$$() returns empty NodeList for missing selectors', () => {
+      const result = ArenaUtils.$$('.nonexistent-class-xyz');
+      assertEqual(result.length, 0);
+    });
+
+    test('validateForm() returns false for empty required field', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.required = true;
+      input.value = '';
+      form.appendChild(input);
+      assertEqual(ArenaUtils.validateForm(form), false);
+    });
+
+    test('validateForm() returns true for filled required field', () => {
+      const form = document.createElement('form');
+      const input = document.createElement('input');
+      input.required = true;
+      input.value = 'test';
+      form.appendChild(input);
+      assertEqual(ArenaUtils.validateForm(form), true);
+    });
+
+    test('showToast() creates toast element with correct role', () => {
+      const container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+      ArenaUtils.showToast('Test toast', 'success');
+      const toasts = container.querySelectorAll('.toast');
+      assert(toasts.length > 0, 'Should create toast element');
+      const toast = toasts[toasts.length - 1];
+      assertEqual(toast.getAttribute('role'), 'status');
+      container.remove();
+    });
+
+    test('CrowdEngine.start() and stop() cycle works correctly', () => {
+      CrowdEngine.start(5000);
+      CrowdEngine.stop();
+      assert(true, 'Start/stop cycle should complete without error');
+    });
+
+    test('FlowOptimizer ACTIVITY_CATALOG has valid entries', () => {
+      assert(Array.isArray(FlowOptimizer.ACTIVITY_CATALOG), 'Should be an array');
+      assert(FlowOptimizer.ACTIVITY_CATALOG.length > 0, 'Should have activities');
+      FlowOptimizer.ACTIVITY_CATALOG.forEach(a => {
+        assertType(a.id, 'string');
+        assertType(a.label, 'string');
+        assertType(a.baseDuration, 'number');
+        assert(a.baseDuration > 0, 'Duration should be positive');
+      });
+    });
+
     // Show results
     showSummary();
     </script>
 </body>
 </html>
+

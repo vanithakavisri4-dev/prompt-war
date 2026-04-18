@@ -1,0 +1,35 @@
+{
+  "name": "arenaflow-ai",
+  "version": "2.0.0",
+  "description": "ArenaFlow AI — Predictive Stadium Experience Orchestrator. AI-powered crowd flow optimization for large-scale sporting venues.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "open tests/test.html",
+    "lint": "npx eslint js/",
+    "docker:build": "docker build -t arenaflow-ai .",
+    "docker:run": "docker run -p 8080:80 arenaflow-ai",
+    "deploy": "gcloud run deploy prompt-war --source . --region us-central1 --allow-unauthenticated --port 80"
+  },
+  "keywords": [
+    "arenaflow",
+    "stadium",
+    "crowd-management",
+    "ai",
+    "google-cloud",
+    "gemini",
+    "firebase",
+    "accessibility",
+    "wcag",
+    "real-time"
+  ],
+  "author": "ArenaFlow AI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vanithakavisri4-dev/prompt-war.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
