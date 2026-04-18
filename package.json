@@ -4,13 +4,14 @@
   "description": "ArenaFlow AI — Predictive Stadium Experience Orchestrator. AI-powered crowd flow optimization for large-scale sporting venues.",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve .",
-    "test": "open tests/test.html",
-    "lint": "npx eslint js/",
-    "docker:build": "docker build -t arenaflow-ai .",
-    "docker:run": "docker run -p 8080:80 arenaflow-ai",
-    "deploy": "gcloud run deploy prompt-war --source . --region us-central1 --allow-unauthenticated --port 80"
-  },
+  "start": "npx serve .",
+  "test": "open tests/test.html",
+  "lint": "npx eslint js/",
+  "validate": "npx eslint js/ && echo 'All checks passed'",
+  "docker:build": "docker build -t arenaflow-ai .",
+  "docker:run": "docker run -p 8080:80 arenaflow-ai",
+  "deploy": "gcloud run deploy prompt-war --source . --region us-central1 --allow-unauthenticated --port 80"
+}
   "keywords": [
     "arenaflow",
     "stadium",
