@@ -451,18 +451,10 @@ const PHASE_MODIFIERS = Object.freeze({
     return Math.round((1 - maxDensity * 0.5 - avgDensity * 0.3) * 100);
   }
 
-  return {
-    start,
-    stop,
-    onUpdate,
-    getSnapshot,
-    predict,
-    getWaitTime,
-    findLeastCrowded,
-    generatePredictions,
-    setPhase,
-    advancePhase,
-    getSafetyIndex,
-    ZONES,
+    return {
+    start, stop, onUpdate, getSnapshot, predict,
+    getWaitTime, findLeastCrowded, generatePredictions,
+    setPhase, advancePhase, getSafetyIndex,
+    get ZONES() { return ZONES.map(z => ({ ...z })); }, // ← returns a safe copy
   };
 })();
