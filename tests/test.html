@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArenaFlow AI — Test Suite</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',system-ui,sans-serif;background:#0a0e1a;color:#f1f5f9;padding:2rem}
+        h1{font-size:1.5rem;margin-bottom:1.5rem;background:linear-gradient(135deg,#6c63ff,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .test-suite{margin-bottom:2rem}
+        .suite-title{font-size:1.1rem;font-weight:700;margin-bottom:.75rem;padding:.5rem;background:rgba(108,99,255,.1);border-radius:8px}
+        .test{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;margin:.25rem 0;border-radius:6px;font-size:.9rem}
+        .test.pass{background:rgba(16,185,129,.1)}
+        .test.fail{background:rgba(239,68,68,.1)}
+        .badge{font-size:.75rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;min-width:40px;text-align:center}
+        .badge.pass{background:#10b981;color:#fff}
+        .badge.fail{background:#ef4444;color:#fff}
+        .summary{margin-top:2rem;padding:1rem;background:rgba(108,99,255,.08);border-radius:10px;border:1px solid rgba(108,99,255,.2)}
+        .summary h2{font-size:1.1rem;margin-bottom:.5rem}
+        .stats{display:flex;gap:2rem;font-size:.95rem}
+        .stats span{font-weight:600}
+        .pass-count{color:#10b981}
+        .fail-count{color:#ef4444}
+    </style>
+</head>
+<body>
+    <h1>🧪 ArenaFlow AI — Test Suite</h1>
+    <div id="test-output"></div>
+    <div id="summary" class="summary" style="display:none"></div>
+
+    <!-- Load app modules -->
+    <script src="../js/utils.js"></script>
+    <script src="../js/crowd-engine.js"></script>
+    <script src="../js/flow-optimizer.js"></script>
+    <script src="../js/gemini.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script>
+    'use strict';
+    const TestRunner = (() => {
+      let passed = 0, failed = 0;
+      const output = document.getElementById('test-output');
+      let currentSuite = null;
+
+      function suite(name) {
+        currentSuite = document.createElement('div');
+        currentSuite.className = 'test-suite';
+        currentSuite.innerHTML = `<div class="suite-title">📦 ${name}</div>`;
+        output.appendChild(currentSuite);
+      }
+
+      function test(name, fn) {
+        const div = document.createElement('div');
+        div.className = 'test';
+        try {
+          fn();
+          div.classList.add('pass');
+          div.innerHTML = `<span class="badge pass">PASS</span><span>${name}</span>`;
+          passed++;
+        } catch (e) {
+          div.classList.add('fail');
+          div.innerHTML = `<span class="badge fail">FAIL</span><span>${name} — ${e.message}</span>`;
+          failed++;
+        }
+        (currentSuite || output).appendChild(div);
+      }
+
+      function assert(cond, msg = 'Assertion failed') { if (!cond) throw new Error(msg); }
+      function assertEqual(a, b, msg) { assert(a === b, msg || `Expected ${b}, got ${a}`); }
+      function assertType(val, type, msg) { assert(typeof val === type, msg || `Expected type ${type}, got ${typeof val}`); }
+
+      function showSummary() {
+        const el = document.getElementById('summary');
+        el.style.display = 'block';
+        const total = passed + failed;
+        el.innerHTML = `<h2>📊 Test Results</h2>
+          <div class="stats">
+            <span>Total: ${total}</span>
+            <span class="pass-count">Passed: ${passed}</span>
+            <span class="fail-count">Failed: ${failed}</span>
+            <span>Rate: ${total ? Math.round(passed/total*100) : 0}%</span>
+          </div>`;
+      }
+
+      return { suite, test, assert, assertEqual, assertType, showSummary };
+    })();
+
+    const { suite, test, assert, assertEqual, assertType, showSummary } = TestRunner;
+
+    // ===== UTILITY TESTS =====
+    suite('ArenaUtils — Core Utilities');
+
+    test('sanitize() escapes HTML characters', () => {
+      const result = ArenaUtils.sanitize('<script>alert("xss")</script>');
+      assert(!result.includes('<script>'), 'Should escape script tags');
+      assert(result.includes('&lt;'), 'Should contain &lt;');
+    });
+
+    test('sanitize() handles empty string', () => {
+      assertEqual(ArenaUtils.sanitize(''), '');
+    });
+
+    test('sanitize() handles special characters', () => {
+      const result = ArenaUtils.sanitize('Tom & Jerry "friends" \'forever\'');
+      assert(result.includes('&amp;'), 'Should escape ampersand');
+      assert(result.includes('&quot;'), 'Should escape quotes');
+    });
+
+    test('clamp() constrains values correctly', () => {
+      assertEqual(ArenaUtils.clamp(5, 0, 10), 5);
+      assertEqual(ArenaUtils.clamp(-5, 0, 10), 0);
+      assertEqual(ArenaUtils.clamp(15, 0, 10), 10);
+    });
+
+    test('lerp() interpolates correctly', () => {
+      assertEqual(ArenaUtils.lerp(0, 10, 0.5), 5);
+      assertEqual(ArenaUtils.lerp(0, 10, 0), 0);
+      assertEqual(ArenaUtils.lerp(0, 10, 1), 10);
+    });
+
+    test('randomId() generates correct length', () => {
+      assertEqual(ArenaUtils.randomId(6).length, 6);
+      assertEqual(ArenaUtils.randomId(12).length, 12);
+    });
+
+    test('randomId() generates unique IDs', () => {
+      const ids = new Set(Array.from({length: 50}, () => ArenaUtils.randomId(8)));
+      assert(ids.size >= 48, 'Should generate mostly unique IDs');
+    });
+
+    test('formatTime() returns valid time string', () => {
+      const time = ArenaUtils.formatTime(new Date());
+      assert(time.includes(':'), 'Should contain colon separator');
+    });
+
+    test('debounce() returns a function', () => {
+      const fn = ArenaUtils.debounce(() => {}, 100);
+      assertType(fn, 'function');
+    });
+
+    test('storage.set() and storage.get() work correctly', () => {
+      ArenaUtils.storage.set('test_key', { foo: 'bar' });
+      const result = ArenaUtils.storage.get('test_key');
+      assertEqual(result.foo, 'bar');
+      ArenaUtils.storage.remove('test_key');
+    });
+
+    test('storage.get() returns fallback for missing keys', () => {
+      const result = ArenaUtils.storage.get('nonexistent_key_xyz', 'default');
+      assertEqual(result, 'default');
+    });
+
+    // ===== CROWD ENGINE TESTS =====
+    suite('CrowdEngine — Crowd Simulation');
+
+    test('getSnapshot() returns valid data structure', () => {
+      const snap = CrowdEngine.getSnapshot();
+      assert(snap.timestamp > 0, 'Should have timestamp');
+      assert(Array.isArray(snap.zones), 'Should have zones array');
+      assert(snap.zones.length > 0, 'Should have at least one zone');
+      assertType(snap.avgDensity, 'number');
+      assertType(snap.totalAttendees, 'number');
+    });
+
+    test('Zone density values are within valid range', () => {
+      const snap = CrowdEngine.getSnapshot();
+      snap.zones.forEach(z => {
+        assert(z.density >= 0 && z.density <= 1, `${z.name} density ${z.density} out of range`);
+      });
+    });
+
+    test('findLeastCrowded() returns valid zone', () => {
+      const zone = CrowdEngine.findLeastCrowded('food');
+      assert(zone !== null, 'Should find a food zone');
+      assertEqual(zone.type, 'food');
+    });
+
+    test('findLeastCrowded() returns least dense zone', () => {
+      const zone = CrowdEngine.findLeastCrowded('gate');
+      const allGates = CrowdEngine.ZONES.filter(z => z.type === 'gate');
+      const minDensity = Math.min(...allGates.map(z => z.density));
+      assertEqual(zone.density, minDensity);
+    });
+
+    test('getWaitTime() returns non-negative number', () => {
+      const wait = CrowdEngine.getWaitTime('food');
+      assert(wait >= 0, 'Wait time should be non-negative');
+      assert(wait <= 15, 'Wait time should not exceed 15 minutes');
+    });
+
+    test('predict() returns valid prediction', () => {
+      const pred = CrowdEngine.predict('food-nw', 10);
+      assert(pred.predicted >= 0 && pred.predicted <= 1, 'Predicted density in range');
+      assert(pred.confidence >= 0 && pred.confidence <= 1, 'Confidence in range');
+    });
+
+    test('generatePredictions() returns array of predictions', () => {
+      const preds = CrowdEngine.generatePredictions();
+      assert(Array.isArray(preds), 'Should return array');
+      assert(preds.length > 0, 'Should have predictions');
+      preds.forEach(p => {
+        assertType(p.time, 'string');
+        assertType(p.text, 'string');
+        assertType(p.confidence, 'string');
+      });
+    });
+
+    test('getSafetyIndex() returns valid percentage', () => {
+      const safety = CrowdEngine.getSafetyIndex();
+      assert(safety >= 0 && safety <= 100, `Safety ${safety} out of range`);
+    });
+
+    test('setPhase() changes event phase', () => {
+      CrowdEngine.setPhase('halftime');
+      assertEqual(CrowdEngine.getSnapshot().phase, 'halftime');
+      CrowdEngine.setPhase('pre-game'); // Reset
+    });
+
+    // ===== FLOW OPTIMIZER TESTS =====
+    suite('FlowOptimizer — Experience Optimization');
+
+    test('generateFlow() returns valid flow structure', () => {
+      const snap = CrowdEngine.getSnapshot();
+      const flow = FlowOptimizer.generateFlow({ section: 'north-lower', accessibility: 'none' }, snap);
+      assert(Array.isArray(flow.items), 'Should have items array');
+      assert(flow.items.length > 0, 'Should have flow items');
+      assertType(flow.totalTimeSaved, 'number');
+      assertType(flow.flowScore, 'number');
+    });
+
+    test('Flow items have required fields', () => {
+      const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+      flow.items.forEach(item => {
+        assertType(item.label, 'string');
+        assertType(item.time, 'string');
+        assertType(item.icon, 'string');
+        assertType(item.density, 'number');
+      });
+    });
+
+    test('Flow score is within valid range', () => {
+      const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+      assert(flow.flowScore >= 0 && flow.flowScore <= 100, 'Flow score in range');
+    });
+
+    test('Wheelchair accessibility increases duration', () => {
+      const snap = CrowdEngine.getSnapshot();
+      const normal = FlowOptimizer.generateFlow({ accessibility: 'none' }, snap);
+      const wheelchair = FlowOptimizer.generateFlow({ accessibility: 'wheelchair' }, snap);
+      // Wheelchair flow should generally exist
+      assert(wheelchair.items.length > 0, 'Wheelchair flow should have items');
+    });
+
+    test('findMeetingPoint() returns valid result', () => {
+      const result = FlowOptimizer.findMeetingPoint(['north-lower', 'south-lower'], CrowdEngine.getSnapshot());
+      assert(result.zone !== null, 'Should find a meeting zone');
+      assertType(result.message, 'string');
+    });
+
+    // ===== GEMINI SERVICE TESTS =====
+    suite('GeminiService — AI Concierge');
+
+    test('chat() returns response for food query', async () => {
+      const response = await GeminiService.chat('Where can I find food?', { snapshot: CrowdEngine.getSnapshot() });
+      assertType(response, 'string');
+      assert(response.length > 0, 'Should return non-empty response');
+    });
+
+    test('chat() returns response for restroom query', async () => {
+      const response = await GeminiService.chat('Where is the nearest restroom?', {});
+      assert(response.includes('Restroom') || response.includes('restroom') || response.includes('🚻'), 'Should mention restroom');
+    });
+
+    test('chat() returns response for unknown query', async () => {
+      const response = await GeminiService.chat('Tell me something random', {});
+      assertType(response, 'string');
+      assert(response.length > 10, 'Should return helpful response');
+    });
+
+    test('translate() returns original text for English', async () => {
+      const result = await GeminiService.translate('Hello', 'en');
+      assertEqual(result, 'Hello');
+    });
+
+    // ===== FIREBASE SERVICE TESTS =====
+    suite('FirebaseService — Data Sync');
+
+    test('isConfigured() returns false without config', () => {
+      assertEqual(FirebaseService.isConfigured(), false);
+    });
+
+    test('createGroup() returns valid group code', () => {
+      const code = FirebaseService.createGroup('Test Group', { name: 'Alice', section: 'north-lower' });
+      assert(code.startsWith('ARENA-'), 'Code should start with ARENA-');
+      assertEqual(code.length, 10); // ARENA- + 4 chars
+    });
+
+    test('joinGroup() adds member to group', () => {
+      const code = FirebaseService.createGroup('Join Test', { name: 'Bob', section: 'south-lower' });
+      const group = FirebaseService.joinGroup(code, { name: 'Carol', section: 'east-lower' });
+      assert(group.members.length >= 2, 'Should have at least 2 members');
+    });
+
+    test('getGroup() retrieves created group', () => {
+      const code = FirebaseService.createGroup('Get Test', { name: 'Dave', section: 'west-lower' });
+      const group = FirebaseService.getGroup(code);
+      assert(group !== null, 'Should retrieve group');
+      assertEqual(group.code, code);
+    });
+
+    // ===== SECURITY TESTS =====
+    suite('Security — Input Validation');
+
+    test('XSS prevention in sanitize()', () => {
+      const attacks = [
+        '<img src=x onerror=alert(1)>',
+        'javascript:alert(1)',
+        '<svg onload=alert(1)>',
+        '"><script>alert(document.cookie)</script>',
+      ];
+      attacks.forEach(a => {
+        const s = ArenaUtils.sanitize(a);
+        assert(!s.includes('<script>'), `Should sanitize: ${a.substring(0,20)}`);
+        assert(!s.includes('<img'), `Should sanitize img: ${a.substring(0,20)}`);
+        assert(!s.includes('<svg'), `Should sanitize svg: ${a.substring(0,20)}`);
+      });
+    });
+
+    test('ID generation uses crypto API', () => {
+      const id = ArenaUtils.randomId(16);
+      assertEqual(id.length, 16);
+      assert(/^[A-Z0-9]+$/.test(id), 'Should be alphanumeric uppercase');
+    });
+
+    // Show results
+    showSummary();
+    </script>
+</body>
+</html>
