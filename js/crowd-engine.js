@@ -262,13 +262,13 @@ const CrowdEngine = (() => {
   /**
    * Phase-based density modifiers simulate realistic crowd behavior.
    */
-const PHASE_MODIFIERS = Object.freeze({
-  "pre-game": Object.freeze({ seating:0.3, concourse:0.8, food:0.9, gate:0.9, restroom:0.4, merch:0.85, medical:0.1, vip:0.5 }),
-  "first-half": Object.freeze({ seating:0.9, concourse:0.3, food:0.2, gate:0.1, restroom:0.3, merch:0.1, medical:0.15, vip:0.8 }),
-  halftime: Object.freeze({ seating:0.4, concourse:0.9, food:0.95, gate:0.15, restroom:0.9, merch:0.8, medical:0.2, vip:0.6 }),
-  "second-half": Object.freeze({ seating:0.85, concourse:0.35, food:0.25, gate:0.1, restroom:0.35, merch:0.15, medical:0.15, vip:0.75 }),
-  "post-game": Object.freeze({ seating:0.2, concourse:0.85, food:0.3, gate:0.95, restroom:0.5, merch:0.4, medical:0.1, vip:0.2 }),
-});
+  const PHASE_MODIFIERS = Object.freeze({
+    "pre-game": Object.freeze({ seating:0.3, concourse:0.8, food:0.9, gate:0.9, restroom:0.4, merch:0.85, medical:0.1, vip:0.5 }),
+    "first-half": Object.freeze({ seating:0.9, concourse:0.3, food:0.2, gate:0.1, restroom:0.3, merch:0.1, medical:0.15, vip:0.8 }),
+    halftime: Object.freeze({ seating:0.4, concourse:0.9, food:0.95, gate:0.15, restroom:0.9, merch:0.8, medical:0.2, vip:0.6 }),
+    "second-half": Object.freeze({ seating:0.85, concourse:0.35, food:0.25, gate:0.1, restroom:0.35, merch:0.15, medical:0.15, vip:0.75 }),
+    "post-game": Object.freeze({ seating:0.2, concourse:0.85, food:0.3, gate:0.95, restroom:0.5, merch:0.4, medical:0.1, vip:0.2 }),
+  });
 
   /**
    * Simulate one tick of crowd movement.
@@ -451,7 +451,7 @@ const PHASE_MODIFIERS = Object.freeze({
     return Math.round((1 - maxDensity * 0.5 - avgDensity * 0.3) * 100);
   }
 
-    return {
+  return {
     start, stop, onUpdate, getSnapshot, predict,
     getWaitTime, findLeastCrowded, generatePredictions,
     setPhase, advancePhase, getSafetyIndex,
