@@ -183,6 +183,17 @@ const App = (() => {
       AccessibilityService.toggleReduceMotion(e.target.checked),
     );
     // Accessibility buttons
+        // After the existing setting-reduce-motion listener, add:
+    ["setting-notifications", "setting-haptics"].forEach((id) => {
+      const el = $(`#${id}`);
+      el?.addEventListener("change", () => {
+        el.setAttribute("aria-checked", el.checked ? "true" : "false");
+      });
+    });
+    $("#setting-reduce-motion")?.addEventListener("change", (e) => {
+      e.target.setAttribute("aria-checked", e.target.checked ? "true" : "false");
+      AccessibilityService.toggleReduceMotion(e.target.checked);
+    });
     $("#btn-high-contrast")?.addEventListener("click", () =>
       AccessibilityService.toggleHighContrast(),
     );
@@ -213,6 +224,7 @@ const App = (() => {
     showApp();
     showToast(`Welcome, ${_state.user}! 🎉`, "success");
     AccessibilityService.announce(`Welcome to ArenaFlow AI, ${_state.user}`);
+    document.documentElement.lang = _state.lang;
   }
 
   /**
@@ -522,12 +534,13 @@ const App = (() => {
       .replace(/\n/g, "<br>");
   }
 
-  function handleCreateGroup() {
-    const name = $("#group-name")?.value?.trim();
+    function handleCreateGroup() {
+    const name = $("#group-name")?.value?.trim().substring(0, 50); // max 50 chars
     if (!name) {
       showToast("Enter a group name", "warning");
       return;
     }
+    // ... rest unchanged
     const code = FirebaseService.createGroup(name, {
       name: _state.user,
       section: _state.section,
@@ -539,12 +552,13 @@ const App = (() => {
     showToast("Group created! Share the code.", "success");
   }
 
-  function handleJoinGroup() {
+    function handleJoinGroup() {
     const code = $("#join-code")?.value?.trim().toUpperCase();
-    if (!code) {
-      showToast("Enter a group code", "warning");
+    if (!code || !/^ARENA-[A-Z0-9]{4}$/.test(code)) {
+      showToast("Enter a valid code (e.g. ARENA-X7K2)", "warning");
       return;
     }
+    // ... rest unchanged
     const group = FirebaseService.joinGroup(code, {
       name: _state.user,
       section: _state.section,
