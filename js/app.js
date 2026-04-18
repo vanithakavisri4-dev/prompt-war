@@ -86,14 +86,14 @@ const App = (() => {
     // Start engines
     CrowdEngine.start(2000);
     CrowdEngine.onUpdate(onCrowdTick);
-    MapsService.init('map-canvas');
     FirebaseService.init(); // Will use local mode without config
     renderFlow();
     renderAlerts();
-    // Init heatmap on dashboard
-    initHeatmapCanvas();
+    // Init heatmap on dashboard (delay to let layout settle)
+    requestAnimationFrame(() => { requestAnimationFrame(initHeatmapCanvas); });
   }
 
+  let _mapInitialized = false;
   function switchView(view) {
     _state.currentView = view;
     $$('.view').forEach(v => v.style.display = 'none');
@@ -105,6 +105,14 @@ const App = (() => {
     const titles = { dashboard:'Dashboard', flow:'My Flow', map:'Live Map', concierge:'AI Concierge', social:'Social Sync', alerts:'Alerts', settings:'Settings' };
     $('#view-title').textContent = titles[view] || view;
     AccessibilityService.announce(`Navigated to ${titles[view] || view}`);
+    // Initialize map canvas only when map view becomes visible
+    if (view === 'map' && !_mapInitialized) {
+      requestAnimationFrame(() => { requestAnimationFrame(() => { MapsService.init('map-canvas'); _mapInitialized = true; }); });
+    }
+    // Re-init heatmap when returning to dashboard
+    if (view === 'dashboard') {
+      requestAnimationFrame(initHeatmapCanvas);
+    }
   }
 
   function onCrowdTick(snapshot) {
@@ -142,11 +150,16 @@ const App = (() => {
     _hmCtx = _hmCanvas.getContext('2d');
     const p = _hmCanvas.parentElement;
     const dpr = devicePixelRatio || 1;
-    _hmCanvas.width = Math.min(p.clientWidth - 48, 700) * dpr;
+    const pw = p.clientWidth > 60 ? p.clientWidth - 48 : 650;
+    const cw = Math.min(pw, 700);
+    _hmCanvas.width = cw * dpr;
     _hmCanvas.height = 400 * dpr;
-    _hmCanvas.style.width = Math.min(p.clientWidth - 48, 700) + 'px';
+    _hmCanvas.style.width = cw + 'px';
     _hmCanvas.style.height = '400px';
+    _hmCtx.setTransform(1, 0, 0, 1, 0, 0); // reset transform before scaling
     _hmCtx.scale(dpr, dpr);
+    // Draw immediately with current data
+    drawHeatmapCanvas(CrowdEngine.getSnapshot());
   }
   function drawHeatmapCanvas(snap) {
     if (!_hmCtx) return;
@@ -165,8 +178,8 @@ const App = (() => {
     snap.zones.forEach(z => {
       const x = z.x * w, y = z.y * h, r = 15 + z.density * 30;
       const g = _hmCtx.createRadialGradient(x, y, 0, x, y, r);
-      const color = z.density > .8 ? [239,68,68] : z.density > .6 ? [245,158,11] : [16,185,129];
-      g.addColorStop(0, `rgba(${color},${.5+z.density*.3})`);
+      const color = z.density > .8 ? '239,68,68' : z.density > .6 ? '245,158,11' : '16,185,129';
+      g.addColorStop(0, `rgba(${color},${(.5+z.density*.3).toFixed(2)})`);
       g.addColorStop(1, `rgba(${color},0)`);
       _hmCtx.fillStyle = g; _hmCtx.beginPath(); _hmCtx.arc(x, y, r, 0, Math.PI*2); _hmCtx.fill();
     });

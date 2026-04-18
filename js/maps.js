@@ -25,12 +25,14 @@ const MapsService = (() => {
     (function loop() { draw(); _animFrame = requestAnimationFrame(loop); })();
   }
   function resize() {
-    if (!_canvas) return;
+    if (!_canvas || !_ctx) return;
     const p = _canvas.parentElement, dpr = devicePixelRatio || 1;
-    _canvas.width = p.clientWidth * dpr;
-    _canvas.height = p.clientWidth * 0.6 * dpr;
-    _canvas.style.width = p.clientWidth + 'px';
-    _canvas.style.height = p.clientWidth * 0.6 + 'px';
+    const pw = p.clientWidth > 20 ? p.clientWidth : 600;
+    _canvas.width = pw * dpr;
+    _canvas.height = pw * 0.6 * dpr;
+    _canvas.style.width = pw + 'px';
+    _canvas.style.height = pw * 0.6 + 'px';
+    _ctx.setTransform(1, 0, 0, 1, 0, 0);
     _ctx.scale(dpr, dpr);
   }
   function setLayer(l) { _activeLayer = l; }
@@ -38,6 +40,7 @@ const MapsService = (() => {
   function draw() {
     if (!_ctx) return;
     const w = _canvas.clientWidth, h = _canvas.clientHeight, snap = CrowdEngine.getSnapshot();
+    if (w < 10 || h < 10) return; // Skip if canvas is too small (hidden view)
     _ctx.clearRect(0, 0, w, h);
     _ctx.fillStyle = '#0d1117'; _ctx.fillRect(0, 0, w, h);
     // Grid
