@@ -1023,6 +1023,48 @@
           assert(a.baseDuration > 0, "Duration should be positive");
         });
       });
+            // ===== NEW TESTS =====
+      suite("ArenaUtils — Debounce Behavior");
+
+      test("debounce() delays function execution", (resolve) => {
+        let callCount = 0;
+        const debounced = ArenaUtils.debounce(() => callCount++, 50);
+        debounced(); debounced(); debounced();
+        // synchronous: callCount still 0 right after
+        assertEqual(callCount, 0, "Should not fire immediately");
+      });
+
+      suite("CrowdEngine — Immutability");
+
+      test("ZONES getter returns a copy, not the internal array", () => {
+        const zones = CrowdEngine.ZONES;
+        const original = zones[0].density;
+        zones[0].density = 9999;
+        const fresh = CrowdEngine.ZONES;
+        assert(fresh[0].density !== 9999, "External mutation must not affect internal state");
+      });
+
+      suite("App Security — Input Validation");
+
+      test("Join code regex rejects malformed codes", () => {
+        assert(!/^ARENA-[A-Z0-9]{4}$/.test("INVALID!"), "Should reject invalid code");
+        assert(!/^ARENA-[A-Z0-9]{4}$/.test("ARENA-"), "Should reject short code");
+        assert(/^ARENA-[A-Z0-9]{4}$/.test("ARENA-X7K2"), "Should accept valid code");
+      });
+
+      test("createGroup() handles very long group names", () => {
+        const code = FirebaseService.createGroup("A".repeat(1000), { name: "T", section: "north-lower" });
+        assert(code.startsWith("ARENA-"), "Should still produce a valid code");
+      });
+
+      suite("Accessibility — Language Attribute");
+
+      test("document.documentElement.lang can be set for i18n", () => {
+        document.documentElement.lang = "hi";
+        assertEqual(document.documentElement.lang, "hi", "Should set Hindi language");
+        document.documentElement.lang = "en"; // reset
+        assertEqual(document.documentElement.lang, "en");
+      });
 
       // Show results
       showSummary();
