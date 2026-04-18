@@ -18,19 +18,20 @@ const GeminiService = (() => {
   /**
    * System prompt that defines the AI concierge persona.
    */
-  const SYSTEM_PROMPT = `You are ArenaFlow AI, an intelligent stadium concierge assistant at a large sporting venue. You help attendees with:
+    const SYSTEM_PROMPT = `You are ArenaFlow AI, an intelligent stadium concierge assistant at a large sporting venue. You help attendees with:
 - Finding food, restrooms, and facilities with shortest wait times
 - Navigation and directions within the stadium
 - Real-time crowd information and predictions
 - Group coordination and meeting points
 - Accessibility guidance for wheelchair users, elderly, and families
 - Emergency information and evacuation routes
-- Event schedule and entertainment info
+- Event schedule, live scores, and entertainment info
+- Parking and transport advice for post-event departure
+- Multi-language support — respond in the user's preferred language when identifiable
 
 Current venue data will be provided with each query. Be concise, friendly, and proactive.
 Always suggest the least crowded option. Use emojis for readability.
 If asked about something outside the stadium context, politely redirect to stadium-related help.`;
-
   /**
    * Configure the API key for Gemini.
    * @param {string} key
@@ -45,24 +46,19 @@ If asked about something outside the stadium context, politely redirect to stadi
    * @param {object} context - Current venue/crowd context
    * @returns {Promise<string>} AI response text
    */
-  async function chat(userMessage, context = {}) {
-    // Build context string from crowd data
+    async function chat(userMessage, context = {}) {
+    const safeMessage = String(userMessage).substring(0, 500); // guard length
     const contextStr = buildContextString(context);
-
     if (_apiKey) {
       try {
-        return await callGeminiAPI(userMessage, contextStr);
+        return await callGeminiAPI(safeMessage, contextStr);
       } catch (err) {
-        console.warn(
-          "Gemini API call failed, using local fallback:",
-          err.message,
-        );
-        return localFallback(userMessage, context);
+        console.warn("Gemini API call failed, using local fallback:", err.message);
+        return localFallback(safeMessage, context);
       }
     }
-    return localFallback(userMessage, context);
+    return localFallback(safeMessage, context);
   }
-
   /**
    * Call the Gemini API.
    * @param {string} message
