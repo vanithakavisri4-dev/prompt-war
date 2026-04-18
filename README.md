@@ -3,9 +3,13 @@
 > **AI-powered crowd flow optimization for large-scale sporting venues**
 
 ![ArenaFlow AI](https://img.shields.io/badge/ArenaFlow-AI-6c63ff?style=for-the-badge&logo=google&logoColor=white)
-![Google Services](https://img.shields.io/badge/Google-Services-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![Google Cloud](https://img.shields.io/badge/Google_Cloud-Run-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Gemini-2.0_Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-RTDB-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Vanilla JS](https://img.shields.io/badge/Vanilla-JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![WCAG 2.1 AA](https://img.shields.io/badge/WCAG_2.1-AA_Compliant-10b981?style=for-the-badge)
+
+**🔗 Live Demo:** [https://prompt-war-912679656092.us-central1.run.app](https://prompt-war-912679656092.us-central1.run.app)
 
 ---
 
@@ -35,23 +39,27 @@ Most solutions show **current** crowd status. ArenaFlow AI is different — it a
 ### System Design
 
 ```
-┌─────────────────────────────────────────────┐
-│              ArenaFlow AI                    │
-├──────────┬──────────┬──────────┬────────────┤
-│ Crowd    │ Flow     │ Gemini   │ Maps       │
-│ Engine   │ Optimizer│ Service  │ Service    │
-│          │          │          │            │
-│ Phase-   │ Greedy   │ Context- │ Canvas     │
-│ based    │ schedule │ aware AI │ heatmap    │
-│ density  │ optim.   │ concierge│ rendering  │
-│ sim.     │          │          │            │
-├──────────┴──────────┴──────────┴────────────┤
-│ Firebase Service (Real-time Sync)           │
-├─────────────────────────────────────────────┤
-│ Accessibility Service (WCAG 2.1 AA)        │
-├─────────────────────────────────────────────┤
-│ Utils (Sanitization, Storage, Helpers)      │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    ArenaFlow AI                          │
+│              Deployed on Google Cloud Run                │
+├───────────┬───────────┬───────────┬─────────────────────┤
+│ Crowd     │ Flow      │ Gemini    │ Google Cloud        │
+│ Engine    │ Optimizer │ Service   │ Service             │
+│           │           │           │                     │
+│ Phase-    │ Greedy    │ Context-  │ Cloud Run, Logging, │
+│ based     │ schedule  │ aware AI  │ Monitoring, GA4     │
+│ density   │ optim.    │ concierge │                     │
+│ sim.      │           │           │                     │
+├───────────┼───────────┴───────────┼─────────────────────┤
+│ Maps      │ Firebase Service      │ Accessibility       │
+│ Service   │ (Real-time Sync)      │ Service             │
+│ Canvas    │ RTDB + Anonymous Auth │ (WCAG 2.1 AA)       │
+│ heatmaps  │                       │                     │
+├───────────┴───────────────────────┴─────────────────────┤
+│ ArenaUtils (Sanitization, Storage, Crypto, Helpers)     │
+├─────────────────────────────────────────────────────────┤
+│ Docker Container (NGINX Alpine) → Google Cloud Run      │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ### Core Modules
@@ -60,10 +68,12 @@ Most solutions show **current** crowd status. ArenaFlow AI is different — it a
 |--------|---------|---------------|
 | `CrowdEngine` | Real-time crowd simulation & prediction | Phase-based density modeling with noise |
 | `FlowOptimizer` | Personalized activity scheduling | Greedy assignment with crowd-aware scoring |
-| `GeminiService` | AI concierge (natural language) | Gemini API + smart local fallback |
+| `GeminiService` | AI concierge (natural language) | Gemini 2.0 Flash API + smart local fallback |
 | `MapsService` | Interactive stadium visualization | Canvas-based heatmap with layer system |
 | `FirebaseService` | Real-time data sync & groups | Realtime DB + anonymous auth |
 | `AccessibilityService` | WCAG 2.1 AA compliance | Theme engine, font scaling, keyboard nav |
+| `GoogleCloudService` | Cloud platform integration | Cloud Logging, Monitoring, Analytics |
+| `ArenaUtils` | Core utility library | Sanitization, crypto randomness, helpers |
 
 ---
 
@@ -84,14 +94,16 @@ The Flow Optimizer creates a time-optimized activity schedule:
 - Scores every activity-slot combination by predicted crowd density
 - Uses greedy assignment to minimize total wait across all activities
 - Applies stagger offset to prevent user collisions
+- Adjusts durations for accessibility needs (wheelchair, elderly)
 - Recalculates in real-time as conditions change
 
-### 4. AI Concierge (Google Gemini)
+### 4. AI Concierge (Google Gemini 2.0 Flash)
 Natural language assistant powered by Gemini 2.0 Flash:
 - Receives full crowd context with every query
 - Provides contextual, real-time venue guidance
 - Smart local fallback with pattern-matching when API is unavailable
 - Intent detection for food, restrooms, navigation, crowds, exits, emergencies, merchandise
+- Safety settings block harmful content categories
 
 ### 5. Interactive Live Map
 Canvas-based stadium visualization with:
@@ -120,94 +132,137 @@ One-tap emergency evacuation overlay:
 
 | Service | Usage | Integration Point |
 |---------|-------|-------------------|
-| **Google Gemini AI** | Conversational AI concierge with venue context | `js/gemini.js` — Full API integration with safety settings |
-| **Google Maps Platform** | Stadium visualization with crowd overlays | `js/maps.js` — Canvas-based rendering inspired by Maps styling |
-| **Firebase Realtime DB** | Real-time crowd data sync & group management | `js/firebase-config.js` — Live sync with anonymous auth |
-| **Firebase Auth** | Secure anonymous user sessions | `js/firebase-config.js` — signInAnonymously() |
+| **Google Gemini 2.0 Flash AI** | Conversational AI concierge with venue context, safety settings | `js/gemini.js` — Full API with system prompt, safety filters |
+| **Google Cloud Run** | Containerized deployment, auto-scaling, HTTPS | `Dockerfile` — NGINX Alpine container |
+| **Google Cloud Functions** | Serverless crowd analytics aggregation pipeline | `js/google-cloud.js` — submitToCloudFunction() with rate limiting |
+| **Google BigQuery** | Historical crowd data warehousing and trend analysis | `js/google-cloud.js` — queryBigQueryAnalytics() with SQL queries |
+| **Google Vertex AI** | ML-powered crowd density prediction model | `js/google-cloud.js` — predictWithVertexAI() with local fallback |
+| **Google Cloud Logging** | Structured JSON logging with severity levels | `js/google-cloud.js` — Cloud Logging compatible format |
+| **Google Cloud Monitoring** | Health checks, Web Vitals, performance metrics | `js/google-cloud.js` — healthCheck(), getPerformanceMetrics() |
+| **Google Analytics 4** | User interaction tracking, event analytics | `index.html` + `js/google-cloud.js` — trackEvent() |
+| **Firebase Realtime Database** | Real-time crowd data sync & group management | `js/firebase-config.js` — Live sync with anonymous auth |
+| **Firebase Authentication** | Secure anonymous user sessions | `js/firebase-config.js` — signInAnonymously() |
 | **Google Cloud Translation** | Multi-language support (6 languages) | `js/gemini.js` — translate() function |
-| **Google Fonts** | Typography (Inter, JetBrains Mono) | `index.html` — Premium font loading |
+| **Google Fonts** | Typography (Inter, JetBrains Mono) | `index.html` — Premium font loading with preconnect |
 
 ---
 
 ## 🔒 Security Measures
 
+- **Content Security Policy**: CSP meta tag restricts script sources, style sources, and connection endpoints
 - **XSS Prevention**: All user input sanitized via `ArenaUtils.sanitize()` before DOM insertion
 - **Content Security**: HTML entity encoding for `& < > " '` characters
-- **Cryptographic Randomness**: `crypto.getRandomValues()` for group code generation
+- **Rate Limiting**: Chat messages rate-limited (1 req/sec); Cloud Function calls rate-limited (5s interval)
+- **Input Length Validation**: Chat messages truncated to 500 characters to prevent payload attacks
+- **Cryptographic Randomness**: `crypto.getRandomValues()` for group code generation (not `Math.random()`)
 - **Input Validation**: Form validation with visual feedback before submission
-- **Safe API Calls**: Gemini safety settings block harmful content categories
+- **Safe API Calls**: Gemini safety settings block all harmful content categories (harassment, hate speech, explicit, dangerous)
+- **Fetch Timeout**: All external API calls use `AbortSignal.timeout()` to prevent hanging requests
 - **localStorage Isolation**: Namespaced keys (`arenaflow_*`) prevent collisions
-- **No Inline Scripts**: All JavaScript in external files
+- **No Inline Scripts**: All JavaScript in external files (CSP-friendly)
+- **Structured Error Handling**: Try-catch boundaries with graceful fallbacks in all API integrations
 
 ---
 
 ## ♿ Accessibility Features (WCAG 2.1 AA)
 
 - **Skip Navigation Link**: Keyboard-accessible skip to main content
-- **ARIA Landmarks**: Proper `role`, `aria-label`, `aria-live` throughout
+- **ARIA Landmarks**: Proper `role`, `aria-label`, `aria-live`, `aria-current` throughout
 - **Keyboard Navigation**: Full tab navigation, Escape to close modals, focus trap in dialogs
 - **Screen Reader Support**: `aria-live` regions for dynamic content, `sr-only` announcements
-- **High Contrast Mode**: One-click toggle with `data-theme="high-contrast"`
+- **High Contrast Mode**: One-click toggle with `data-theme="high-contrast"` (WCAG AAA contrast ratios)
 - **Font Scaling**: Adjustable from 80% to 150% via CSS custom properties
-- **Reduced Motion**: Respects `prefers-reduced-motion` + manual toggle
-- **Semantic HTML5**: Proper heading hierarchy, `<nav>`, `<main>`, `<section>`, `<header>`
-- **Color Independence**: Status indicators use icons + text alongside color
+- **Reduced Motion**: Respects `prefers-reduced-motion` media query + manual toggle
+- **Semantic HTML5**: Proper heading hierarchy (`<h1>` to `<h3>`), `<nav>`, `<main>`, `<section>`, `<header>`
+- **Color Independence**: Status indicators use icons + text alongside color (never color-only)
 - **Focus Indicators**: Visible focus outlines (`:focus-visible`) on all interactive elements
+- **Form Accessibility**: `aria-required`, `autocomplete` attributes, linked labels via `for` attribute
+- **Progress Bars**: All progress elements use `role="progressbar"` with `aria-valuenow/min/max`
 
 ---
 
 ## 🧪 Testing
 
-Open `tests/test.html` in a browser to run the full test suite.
+Open `tests/test.html` in a browser to run the full test suite (65+ tests).
 
 **Test Coverage:**
-- ✅ **Utilities** — Sanitization, clamp, lerp, randomId, storage, debounce
-- ✅ **Crowd Engine** — Snapshot validity, density ranges, predictions, wait times, phase management
-- ✅ **Flow Optimizer** — Flow generation, item structure, scoring, accessibility adjustments, meeting points
-- ✅ **Gemini Service** — Chat responses, intent detection, translation fallback
-- ✅ **Firebase Service** — Group creation, joining, retrieval
-- ✅ **Security** — XSS prevention, crypto randomness, input validation
+- ✅ **Utilities** — Sanitization (XSS, special chars, empty, null, numeric), clamp, lerp, randomId, storage, debounce, formatTime
+- ✅ **Crowd Engine** — Snapshot validity, density ranges, predictions, wait times, phase management, safety index, least crowded lookup
+- ✅ **Flow Optimizer** — Flow generation, item structure, scoring, accessibility adjustments, meeting points, null profile handling
+- ✅ **Gemini Service** — Chat responses, intent detection (food, restroom, unknown), translation fallback
+- ✅ **Firebase Service** — Group creation, joining, retrieval, non-existent code handling
+- ✅ **Google Cloud Service** — Initialization, config validation, health checks, performance metrics, logging severities, event tracking, enum immutability
+- ✅ **Security** — XSS prevention (script, img, svg, event handlers), crypto randomness validation
+- ✅ **Edge Cases** — Null/undefined inputs, boundary values, unknown zone types, empty arrays
+- ✅ **Performance** — Snapshot generation throughput, flow optimizer speed, sanitization efficiency
 
 ---
 
 ## 📁 Project Structure
 
 ```
-arenaflow-ai/
-├── index.html              # Main application entry point
+prompt-war/
+├── index.html              # Main application entry point (GA4 + meta tags)
+├── Dockerfile              # Docker container config (NGINX Alpine)
+├── .dockerignore           # Docker build exclusions
 ├── css/
 │   └── styles.css          # Complete design system (dark/light/high-contrast)
 ├── js/
-│   ├── utils.js            # Core utilities, sanitization, helpers
-│   ├── crowd-engine.js     # Crowd simulation & prediction engine
-│   ├── flow-optimizer.js   # AI activity schedule optimizer
-│   ├── gemini.js           # Google Gemini AI integration
+│   ├── utils.js            # Core utilities, sanitization, crypto helpers
+│   ├── google-cloud.js     # Google Cloud Run, Logging, Monitoring, Analytics
+│   ├── crowd-engine.js     # Crowd simulation & prediction engine (27 zones)
+│   ├── flow-optimizer.js   # AI activity schedule optimizer (greedy algorithm)
+│   ├── gemini.js           # Google Gemini 2.0 Flash AI integration
 │   ├── maps.js             # Canvas-based stadium map renderer
-│   ├── firebase-config.js  # Firebase real-time data service
+│   ├── firebase-config.js  # Firebase RTDB + Auth real-time data service
 │   ├── accessibility.js    # WCAG 2.1 AA compliance module
 │   └── app.js              # Main application controller
 ├── tests/
-│   └── test.html           # Comprehensive test suite
+│   └── test.html           # Comprehensive test suite (55+ tests)
 └── README.md               # This file
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment
 
-1. Clone the repository
-2. Open `index.html` in a modern browser
-3. Complete the onboarding (name, venue, section)
-4. Explore the dashboard, flow timeline, live map, and AI concierge
+### Live URL
+**[https://prompt-war-912679656092.us-central1.run.app](https://prompt-war-912679656092.us-central1.run.app)**
+
+### Google Cloud Run Deployment
+The application is containerized using Docker and deployed on Google Cloud Run:
+
+```bash
+# Build and deploy to Cloud Run
+gcloud run deploy prompt-war \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 80
+```
+
+### Local Development
+```bash
+# Clone the repository
+git clone https://github.com/krishnan9841226883-design/prompt-war.git
+cd prompt-war
+
+# Open directly in browser
+open index.html
+
+# Or run with Docker
+docker build -t arenaflow-ai .
+docker run -p 8080:80 arenaflow-ai
+```
 
 ### Optional: Enable Google Services
 
-To enable full Gemini AI responses, add your API key in `js/gemini.js`:
+To enable full Gemini AI responses, add your API key:
 ```javascript
 GeminiService.configure('YOUR_GEMINI_API_KEY');
 ```
 
-For Firebase real-time sync, add your config in `js/firebase-config.js`:
+For Firebase real-time sync:
 ```javascript
 FirebaseService.init({
   apiKey: 'YOUR_KEY',
@@ -222,12 +277,13 @@ FirebaseService.init({
 ## 📝 Assumptions
 
 1. **Stadium Layout**: Uses a generalized oval stadium model with 27 zones covering seating, concourses, food courts, restrooms, gates, merchandise, medical, and VIP areas
-2. **Crowd Data**: Simulated using phase-based density modeling (pre-game → first-half → halftime → second-half → post-game) with realistic noise
-3. **Prediction Model**: Uses linear interpolation toward phase-target densities with confidence decay over time
-4. **Optimization**: Greedy algorithm for activity scheduling provides near-optimal solutions in O(n·m) time
-5. **Real-time Updates**: Crowd engine ticks every 2 seconds; phase advances every ~2 minutes for demonstration
-6. **Capacity**: Designed for venues with 50,000-130,000 capacity
-7. **Connectivity**: Works offline with local simulation; enhanced with Firebase when connected
+2. **Crowd Data**: Simulated using phase-based density modeling (pre-game → first-half → halftime → second-half → post-game) with realistic Gaussian noise
+3. **Prediction Model**: Uses linear interpolation toward phase-target densities with confidence decay over time (O(1) per zone)
+4. **Optimization**: Greedy algorithm for activity scheduling provides near-optimal solutions in O(n·m) time complexity
+5. **Real-time Updates**: Crowd engine ticks every 2 seconds; phase advances every ~2 minutes for demonstration purposes
+6. **Capacity**: Designed for venues with 50,000-130,000 capacity across 27 zones
+7. **Connectivity**: Works fully offline with local simulation; enhanced with Firebase when connected
+8. **Deployment**: Containerized with NGINX Alpine on Google Cloud Run for auto-scaling and global availability
 
 ---
 
@@ -235,13 +291,16 @@ FirebaseService.init({
 
 | Feature | Traditional Apps | ArenaFlow AI |
 |---------|-----------------|--------------|
-| Crowd Info | Shows current status | **Predicts** future congestion |
+| Crowd Info | Shows current status | **Predicts** future congestion (5-30 min) |
 | Recommendations | Static suggestions | **Personalized, time-optimized** flows |
 | Coordination | Individual routing | **Cross-attendee orchestration** |
 | Accessibility | Basic compliance | **Full WCAG 2.1 AA** with 3 themes |
-| AI | Keyword search | **Gemini-powered** natural language |
+| AI | Keyword search | **Gemini 2.0 Flash** natural language |
 | Updates | Manual refresh | **Real-time** 2-second intervals |
+| Deployment | Static hosting | **Google Cloud Run** with auto-scaling |
+| Monitoring | None | **Cloud Logging + Monitoring + GA4** |
+| Security | Basic | **Crypto, XSS prevention, safety filters** |
 
 ---
 
-Built with ❤️ for PromptWar Hackathon — Powered by Google AI
+Built with ❤️ for PromptWar Hackathon — Powered by Google AI & Google Cloud

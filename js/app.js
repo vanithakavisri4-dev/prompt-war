@@ -1,24 +1,101 @@
 /**
  * ArenaFlow AI — Main Application Controller
  * Orchestrates all modules, handles UI events, and manages application state.
+ *
+ * Dependencies:
+ * - ArenaUtils: DOM helpers, sanitization, storage
+ * - CrowdEngine: Real-time crowd simulation
+ * - FlowOptimizer: AI-powered activity scheduling
+ * - GeminiService: Google Gemini AI conversational concierge
+ * - MapsService: Canvas-based stadium map renderer
+ * - FirebaseService: Real-time data sync and group management
+ * - AccessibilityService: WCAG 2.1 AA compliance
+ * - GoogleCloudService: Cloud Run integration, logging, monitoring
+ *
  * @module App
+ * @version 2.0.0
+ * @author ArenaFlow AI Team
  */
 'use strict';
+
 const App = (() => {
-  let _state = { user: null, venue: null, section: null, accessibility: 'none', lang: 'en', currentView: 'dashboard', groupCode: null };
+  /* ── Constants ─────────────────────────────────────────────── */
+
+  /** Loading screen display duration in milliseconds. */
+  const LOADING_SCREEN_DURATION_MS = 1500;
+
+  /** Fade-out transition duration for the loading screen. */
+  const LOADING_FADE_MS = 500;
+
+  /** Crowd engine tick interval in milliseconds. */
+  const CROWD_TICK_INTERVAL_MS = 2000;
+
+  /** Clock update interval in milliseconds. */
+  const CLOCK_INTERVAL_MS = 1000;
+
+  /** Delay for simulated chat injection. */
+  const SIMULATED_CHAT_DELAY_MS = 300;
+
+  /** Maximum wait time for food calculation. */
+  const MAX_WAIT_MINUTES = 15;
+
+  /** View name mapping for navigation titles. */
+  const VIEW_TITLES = Object.freeze({
+    dashboard: 'Dashboard',
+    flow: 'My Flow',
+    map: 'Live Map',
+    concierge: 'AI Concierge',
+    social: 'Social Sync',
+    alerts: 'Alerts',
+    settings: 'Settings',
+  });
+
+  /** Venue display name mapping. */
+  const VENUE_NAMES = Object.freeze({
+    'stadium-alpha': 'MetLife Stadium',
+    'stadium-beta': 'Wembley Stadium',
+    'stadium-gamma': 'MCG',
+    'stadium-delta': 'Narendra Modi Stadium',
+  });
+
+  /* ── State ─────────────────────────────────────────────────── */
+
+  /**
+   * Application state object.
+   * @type {{user: string|null, venue: string|null, section: string|null,
+   *         accessibility: string, lang: string, currentView: string,
+   *         groupCode: string|null}}
+   */
+  let _state = {
+    user: null,
+    venue: null,
+    section: null,
+    accessibility: 'none',
+    lang: 'en',
+    currentView: 'dashboard',
+    groupCode: null,
+  };
+
   const { $, $$, sanitize, showToast, validateForm, storage } = ArenaUtils;
 
+  /**
+   * Initialize the application: restore session or show onboarding.
+   * Sets up event bindings, accessibility features, and loading screen.
+   */
   function init() {
-    // Hide loading screen after brief delay
-    setTimeout(() => {
-      const loader = $('#loading-screen');
-      if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
-      const saved = storage.get('user');
-      if (saved) { _state = { ..._state, ...saved }; showApp(); }
-      else { $('#onboarding-modal').style.display = 'flex'; }
-    }, 1500);
-    bindEvents();
-    AccessibilityService.init();
+    try {
+      setTimeout(() => {
+        const loader = $('#loading-screen');
+        if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', LOADING_FADE_MS); }
+        const saved = storage.get('user');
+        if (saved) { _state = { ..._state, ...saved }; showApp(); }
+        else { $('#onboarding-modal').style.display = 'flex'; }
+      }, LOADING_SCREEN_DURATION_MS);
+      bindEvents();
+      AccessibilityService.init();
+    } catch (error) {
+      console.error('[App] Initialization failed:', error);
+    }
   }
 
   function bindEvents() {
@@ -79,12 +156,23 @@ const App = (() => {
     AccessibilityService.announce(`Welcome to ArenaFlow AI, ${_state.user}`);
   }
 
+  /**
+   * Show the main application shell and start all service engines.
+   * Initializes Google Cloud services, crowd simulation, and Firebase.
+   */
   function showApp() {
     $('#app-shell').style.display = 'flex';
-    const venueNames = { 'stadium-alpha': 'MetLife Stadium', 'stadium-beta': 'Wembley Stadium', 'stadium-gamma': 'MCG', 'stadium-delta': 'Narendra Modi Stadium' };
-    $('#venue-name-display').textContent = venueNames[_state.venue] || 'Stadium';
+    $('#venue-name-display').textContent = VENUE_NAMES[_state.venue] || 'Stadium';
+    // Initialize Google Cloud integration (logging, monitoring, analytics)
+    GoogleCloudService.init();
+    GoogleCloudService.trackEvent('app_loaded', {
+      venue: _state.venue,
+      section: _state.section,
+      accessibility: _state.accessibility,
+    });
+
     // Start engines
-    CrowdEngine.start(2000);
+    CrowdEngine.start(CROWD_TICK_INTERVAL_MS);
     CrowdEngine.onUpdate(onCrowdTick);
     FirebaseService.init(); // Will use local mode without config
     renderFlow();
@@ -102,9 +190,9 @@ const App = (() => {
     $$('.nav-btn[data-view]').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
     const btn = $(`.nav-btn[data-view="${view}"]`);
     if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'page'); }
-    const titles = { dashboard:'Dashboard', flow:'My Flow', map:'Live Map', concierge:'AI Concierge', social:'Social Sync', alerts:'Alerts', settings:'Settings' };
-    $('#view-title').textContent = titles[view] || view;
-    AccessibilityService.announce(`Navigated to ${titles[view] || view}`);
+    $('#view-title').textContent = VIEW_TITLES[view] || view;
+    AccessibilityService.announce(`Navigated to ${VIEW_TITLES[view] || view}`);
+    GoogleCloudService.trackEvent('view_change', { view_name: view });
     // Initialize map canvas only when map view becomes visible
     if (view === 'map' && !_mapInitialized) {
       requestAnimationFrame(() => { requestAnimationFrame(() => { MapsService.init('map-canvas'); _mapInitialized = true; }); });
@@ -115,32 +203,36 @@ const App = (() => {
     }
   }
 
+  /**
+   * Handle each crowd simulation tick — update all dashboard widgets.
+   * Submits snapshot data to Google Cloud Functions for BigQuery ingestion.
+   * @param {object} snapshot - Current crowd engine snapshot
+   */
   function onCrowdTick(snapshot) {
-    // Update dashboard stats
     const avgD = Math.round(snapshot.avgDensity * 100);
-    const el = (id, v) => { const e = $(id); if (e) e.textContent = v; };
-    el('#stat-crowd', avgD + '%');
-    el('#stat-wait', CrowdEngine.getWaitTime('food') + ' min');
-    el('#stat-flow', Math.round(87 + (Math.random() - 0.5) * 6) + '/100');
-    el('#stat-safety', CrowdEngine.getSafetyIndex() + '%');
-    // Bars
-    const bar = (id, w) => { const e = $(id); if (e) { e.style.width = w + '%'; e.setAttribute('aria-valuenow', Math.round(w)); } };
-    bar('#bar-crowd', avgD);
-    bar('#bar-wait', CrowdEngine.getWaitTime('food') / 15 * 100);
-    bar('#bar-safety', CrowdEngine.getSafetyIndex());
-    // Trends
-    const trend = (id, v, up) => { const e = $(id); if (e) { e.textContent = v; e.className = `stat-trend ${up ? 'trend-up' : 'trend-down'}`; } };
-    trend('#trend-crowd', avgD > 60 ? '↑ ' + (avgD - 60) + '%' : '↓ ' + (60 - avgD) + '%', avgD <= 60);
-    // Predictions
+    const setText = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+    setText('#stat-crowd', avgD + '%');
+    setText('#stat-wait', CrowdEngine.getWaitTime('food') + ' min');
+    setText('#stat-flow', Math.round(87 + (Math.random() - 0.5) * 6) + '/100');
+    setText('#stat-safety', CrowdEngine.getSafetyIndex() + '%');
+    // Progress bars with ARIA updates
+    const setBar = (id, w) => { const e = $(id); if (e) { e.style.width = w + '%'; e.setAttribute('aria-valuenow', Math.round(w)); } };
+    setBar('#bar-crowd', avgD);
+    setBar('#bar-wait', CrowdEngine.getWaitTime('food') / MAX_WAIT_MINUTES * 100);
+    setBar('#bar-safety', CrowdEngine.getSafetyIndex());
+    // Trend indicators
+    const setTrend = (id, v, up) => { const e = $(id); if (e) { e.textContent = v; e.className = `stat-trend ${up ? 'trend-up' : 'trend-down'}`; } };
+    setTrend('#trend-crowd', avgD > 60 ? '↑ ' + (avgD - 60) + '%' : '↓ ' + (60 - avgD) + '%', avgD <= 60);
     renderPredictions();
     // Quick action wait times
-    el('#qa-food-wait', '~' + CrowdEngine.getWaitTime('food') + ' min');
-    el('#qa-restroom-wait', '~' + CrowdEngine.getWaitTime('restroom') + ' min');
-    el('#qa-merch-wait', '~' + CrowdEngine.getWaitTime('merch') + ' min');
+    setText('#qa-food-wait', '~' + CrowdEngine.getWaitTime('food') + ' min');
+    setText('#qa-restroom-wait', '~' + CrowdEngine.getWaitTime('restroom') + ' min');
+    setText('#qa-merch-wait', '~' + CrowdEngine.getWaitTime('merch') + ' min');
     const bestGate = CrowdEngine.findLeastCrowded('gate');
-    el('#qa-exit-wait', bestGate ? bestGate.name.split('(')[1]?.replace(')','') || 'Gate B' : 'Gate B');
-    // Draw heatmap
+    setText('#qa-exit-wait', bestGate ? bestGate.name.split('(')[1]?.replace(')','') || 'Gate B' : 'Gate B');
     drawHeatmapCanvas(snapshot);
+    // Submit to Google Cloud Functions → BigQuery pipeline (rate-limited)
+    GoogleCloudService.submitToCloudFunction(snapshot);
   }
 
   let _hmCanvas, _hmCtx;
@@ -216,24 +308,55 @@ const App = (() => {
     el('#flow-score-val', flow.flowScore);
   }
 
+  /** @type {number} Timestamp of last chat message for rate limiting. */
+  let _lastChatTime = 0;
+
+  /** Minimum interval between chat messages (ms) to prevent abuse. */
+  const CHAT_RATE_LIMIT_MS = 1000;
+
+  /** Maximum allowed chat message length. */
+  const MAX_CHAT_LENGTH = 500;
+
+  /**
+   * Handle AI Concierge chat submission.
+   * Rate-limited and input-length validated for security.
+   * Tracks chat events via Google Analytics 4.
+   */
   async function handleChat() {
-    const input = $('#chat-input');
-    const msg = input.value.trim();
-    if (!msg) return;
-    input.value = '';
-    appendChatMsg(msg, 'user');
-    const typing = appendChatMsg('Thinking...', 'bot');
-    const context = { snapshot: CrowdEngine.getSnapshot(), userSection: _state.section, accessibility: _state.accessibility };
-    const response = await GeminiService.chat(msg, context);
-    typing.querySelector('.chat-bubble').innerHTML = formatMarkdown(response);
-    AccessibilityService.announce('AI response received');
+    try {
+      const input = $('#chat-input');
+      const msg = input.value.trim().substring(0, MAX_CHAT_LENGTH);
+      if (!msg) return;
+      // Rate limiting
+      const now = Date.now();
+      if (now - _lastChatTime < CHAT_RATE_LIMIT_MS) {
+        showToast('Please wait before sending another message', 'warning');
+        return;
+      }
+      _lastChatTime = now;
+      input.value = '';
+      appendChatMsg(msg, 'user');
+      const typing = appendChatMsg('Thinking...', 'bot');
+      GoogleCloudService.trackEvent('chat_message', { message_length: msg.length });
+      const context = { snapshot: CrowdEngine.getSnapshot(), userSection: _state.section, accessibility: _state.accessibility };
+      const response = await GeminiService.chat(msg, context);
+      typing.querySelector('.chat-bubble').innerHTML = formatMarkdown(response);
+      AccessibilityService.announce('AI response received');
+    } catch (error) {
+      GoogleCloudService.log(GoogleCloudService.Severity.ERROR, 'Chat error', { error: error.message });
+      showToast('Unable to process your message. Please try again.', 'danger');
+    }
   }
 
+  /**
+   * Simulate a chat message from quick action buttons.
+   * @param {string} msg - Pre-filled chat message
+   */
   function simulateChat(msg) {
     setTimeout(() => {
       $('#chat-input').value = msg;
       handleChat();
-    }, 300);
+    }, SIMULATED_CHAT_DELAY_MS);
   }
 
   function appendChatMsg(text, role) {

@@ -31,6 +31,7 @@
 
     <!-- Load app modules -->
     <script src="../js/utils.js"></script>
+    <script src="../js/google-cloud.js"></script>
     <script src="../js/crowd-engine.js"></script>
     <script src="../js/flow-optimizer.js"></script>
     <script src="../js/gemini.js"></script>
@@ -330,6 +331,256 @@
       const id = ArenaUtils.randomId(16);
       assertEqual(id.length, 16);
       assert(/^[A-Z0-9]+$/.test(id), 'Should be alphanumeric uppercase');
+    });
+
+    // ===== GOOGLE CLOUD SERVICE TESTS =====
+    suite('GoogleCloudService — Cloud Run & Logging');
+
+    test('init() initializes without error', () => {
+      GoogleCloudService.init();
+      assert(true, 'Should initialize without throwing');
+    });
+
+    test('getConfig() returns valid GCP configuration', () => {
+      const config = GoogleCloudService.getConfig();
+      assertType(config.projectId, 'string');
+      assertType(config.region, 'string');
+      assertType(config.serviceName, 'string');
+      assertEqual(config.projectId, 'prompt-war-493707');
+      assertEqual(config.region, 'us-central1');
+    });
+
+    test('healthCheck() returns healthy status with all module checks', () => {
+      const health = GoogleCloudService.healthCheck();
+      assertEqual(health.status, 'healthy');
+      assertType(health.timestamp, 'string');
+      assert(health.uptime >= 0, 'Uptime should be non-negative');
+      assertEqual(health.checks.crowdEngine, 'ok');
+      assertEqual(health.checks.geminiService, 'ok');
+      assertEqual(health.checks.googleCloudService, 'ok');
+      assertType(health.revision, 'object'); // null is object
+    });
+
+    test('getPerformanceMetrics() returns Cloud Monitoring metrics', () => {
+      const metrics = GoogleCloudService.getPerformanceMetrics();
+      assertType(metrics.domContentLoaded, 'number');
+      assertType(metrics.firstPaint, 'number');
+      assertType(metrics.firstContentfulPaint, 'number');
+      assertType(metrics.ttfb, 'number');
+      assertType(metrics.resourceCount, 'number');
+    });
+
+    test('log() handles all Cloud Logging severity levels', () => {
+      const { Severity } = GoogleCloudService;
+      GoogleCloudService.log(Severity.DEBUG, 'Test debug');
+      GoogleCloudService.log(Severity.INFO, 'Test info');
+      GoogleCloudService.log(Severity.WARNING, 'Test warning');
+      GoogleCloudService.log(Severity.ERROR, 'Test error', { code: 500 });
+      GoogleCloudService.log(Severity.CRITICAL, 'Test critical');
+      GoogleCloudService.log(Severity.NOTICE, 'Test notice');
+      assert(true, 'All severity levels logged without error');
+    });
+
+    test('Severity enum is frozen/immutable', () => {
+      const { Severity } = GoogleCloudService;
+      assertType(Severity.INFO, 'string');
+      assertEqual(Severity.CRITICAL, 'CRITICAL');
+      try { Severity.NEW_LEVEL = 'test'; } catch(e) { /* strict mode */ }
+      assert(!Severity.NEW_LEVEL, 'Severity should be immutable');
+    });
+
+    suite('GoogleCloudService — Analytics & Cloud Functions');
+
+    test('trackEvent() records GA4 events without error', () => {
+      GoogleCloudService.trackEvent('test_event', { category: 'test' });
+      GoogleCloudService.trackEvent('view_change', { view_name: 'dashboard' });
+      assert(true, 'Events tracked without error');
+    });
+
+    test('submitToCloudFunction() handles missing data gracefully', async () => {
+      const result = await GoogleCloudService.submitToCloudFunction({});
+      // Should not throw — returns null on failure/rate-limit
+      assert(result === null || typeof result === 'object', 'Should handle gracefully');
+    });
+
+    test('flushAnalytics() runs without error', () => {
+      GoogleCloudService.trackEvent('flush_test', {});
+      GoogleCloudService.flushAnalytics();
+      assert(true, 'Analytics flushed without error');
+    });
+
+    suite('GoogleCloudService — BigQuery & Vertex AI');
+
+    test('queryBigQueryAnalytics() returns historical data with fallback', async () => {
+      const data = await GoogleCloudService.queryBigQueryAnalytics('stadium-alpha', 3);
+      assert(data !== null, 'Should return data');
+      assertType(data.totalRows, 'number');
+      assert(data.rows.length > 0, 'Should have historical rows');
+      assertEqual(data.source, 'local-estimate');
+    });
+
+    test('predictWithVertexAI() returns prediction with local fallback', async () => {
+      const pred = await GoogleCloudService.predictWithVertexAI('food-nw', 10, CrowdEngine.getSnapshot());
+      assertType(pred.predicted, 'number');
+      assertType(pred.confidence, 'number');
+      assertType(pred.source, 'string');
+      assert(pred.predicted >= 0 && pred.predicted <= 1, 'Prediction in range');
+    });
+
+    test('predictWithVertexAI() handles unknown zone gracefully', async () => {
+      const pred = await GoogleCloudService.predictWithVertexAI('unknown-zone', 5);
+      assertType(pred.predicted, 'number');
+      assert(pred.source === 'local-engine' || pred.source === 'default', 'Should use fallback');
+    });
+
+    test('dispose() cleans up resources without error', () => {
+      // Should not throw
+      GoogleCloudService.dispose();
+      assert(true, 'Disposed without error');
+      // Re-init for subsequent tests
+      GoogleCloudService.init();
+    });
+
+    // ===== EDGE CASE TESTS =====
+    suite('Edge Cases — Boundary & Error Conditions');
+
+    test('sanitize() handles null/undefined input', () => {
+      assertType(ArenaUtils.sanitize(null), 'string');
+      assertType(ArenaUtils.sanitize(undefined), 'string');
+    });
+
+    test('sanitize() handles numeric input', () => {
+      assertEqual(ArenaUtils.sanitize(42), '42');
+      assertEqual(ArenaUtils.sanitize(0), '0');
+    });
+
+    test('clamp() handles equal min and max', () => {
+      assertEqual(ArenaUtils.clamp(5, 3, 3), 3);
+    });
+
+    test('lerp() clamps t outside 0-1 range', () => {
+      assertEqual(ArenaUtils.lerp(0, 10, -1), 0);
+      assertEqual(ArenaUtils.lerp(0, 10, 2), 10);
+    });
+
+    test('CrowdEngine handles unknown zone type gracefully', () => {
+      assertEqual(CrowdEngine.findLeastCrowded('nonexistent'), null);
+    });
+
+    test('CrowdEngine.getWaitTime() returns 0 for unknown type', () => {
+      assertEqual(CrowdEngine.getWaitTime('nonexistent'), 0);
+    });
+
+    test('CrowdEngine.predict() handles unknown zone ID', () => {
+      const pred = CrowdEngine.predict('nonexistent-zone', 10);
+      assertEqual(pred.predicted, 0.5);
+      assertEqual(pred.confidence, 0);
+    });
+
+    test('CrowdEngine.setPhase() rejects invalid phase', () => {
+      CrowdEngine.setPhase('invalid-phase');
+      assert(CrowdEngine.getSnapshot().phase !== 'invalid-phase', 'Should not set invalid phase');
+      CrowdEngine.setPhase('pre-game');
+    });
+
+    test('FlowOptimizer handles null profile gracefully', () => {
+      const flow = FlowOptimizer.generateFlow(null, CrowdEngine.getSnapshot());
+      assert(flow.items.length > 0, 'Should still generate flow items');
+    });
+
+    test('FlowOptimizer.findMeetingPoint() handles empty sections', () => {
+      const result = FlowOptimizer.findMeetingPoint([], CrowdEngine.getSnapshot());
+      assert(result.zone !== undefined, 'Should return a zone');
+    });
+
+    test('FirebaseService.joinGroup() handles non-existent code', () => {
+      const group = FirebaseService.joinGroup('ARENA-ZZZZ', { name: 'Test', section: 'north-lower' });
+      assert(group !== null, 'Should create fallback group');
+    });
+
+    test('FirebaseService.getGroup() returns null for unknown code', () => {
+      const group = FirebaseService.getGroup('NONEXISTENT');
+      assertEqual(group, null);
+    });
+
+    test('GeminiService.chat() handles empty context object', async () => {
+      const response = await GeminiService.chat('Hello', {});
+      assertType(response, 'string');
+      assert(response.length > 0, 'Should return non-empty response');
+    });
+
+    // ===== PERFORMANCE & EFFICIENCY TESTS =====
+    suite('Performance — Efficiency & Resource Optimization');
+
+    test('CrowdEngine: 100 snapshots in < 500ms', () => {
+      const start = performance.now();
+      for (let i = 0; i < 100; i++) CrowdEngine.getSnapshot();
+      const elapsed = performance.now() - start;
+      assert(elapsed < 500, `Took ${elapsed.toFixed(1)}ms`);
+    });
+
+    test('FlowOptimizer: flow generation in < 100ms', () => {
+      const start = performance.now();
+      FlowOptimizer.generateFlow({ section: 'north-lower' }, CrowdEngine.getSnapshot());
+      assert(performance.now() - start < 100, 'Should complete quickly');
+    });
+
+    test('sanitize(): 1000 XSS payloads in < 50ms', () => {
+      const input = '<script>'.repeat(1000);
+      const start = performance.now();
+      ArenaUtils.sanitize(input);
+      assert(performance.now() - start < 50, 'Should handle large inputs efficiently');
+    });
+
+    test('CrowdEngine.generatePredictions() in < 50ms', () => {
+      const start = performance.now();
+      CrowdEngine.generatePredictions();
+      assert(performance.now() - start < 50, 'Predictions should be fast');
+    });
+
+    test('GoogleCloudService.healthCheck() in < 20ms', () => {
+      const start = performance.now();
+      GoogleCloudService.healthCheck();
+      assert(performance.now() - start < 20, 'Health check should be fast');
+    });
+
+    // ===== REGRESSION TESTS =====
+    suite('Regression — Stability Validation');
+
+    test('CrowdEngine zones maintain valid density after multiple ticks', () => {
+      CrowdEngine.setPhase('halftime');
+      for (let i = 0; i < 10; i++) {
+        const snap = CrowdEngine.getSnapshot();
+        snap.zones.forEach(z => {
+          assert(z.density >= 0 && z.density <= 1, `${z.name} density ${z.density} invalid after tick ${i}`);
+        });
+      }
+      CrowdEngine.setPhase('pre-game');
+    });
+
+    test('FlowOptimizer produces consistent structure across profiles', () => {
+      const profiles = [
+        { section: 'north-lower', accessibility: 'none' },
+        { section: 'south-upper', accessibility: 'wheelchair' },
+        { section: 'vip', accessibility: 'elderly' },
+      ];
+      profiles.forEach(p => {
+        const flow = FlowOptimizer.generateFlow(p, CrowdEngine.getSnapshot());
+        assert(Array.isArray(flow.items), 'Items should be array');
+        assertType(flow.totalTimeSaved, 'number');
+        assertType(flow.flowScore, 'number');
+        assert(flow.flowScore >= 0 && flow.flowScore <= 100, 'Score in range');
+      });
+    });
+
+    test('Multiple group create/join cycles work correctly', () => {
+      const code1 = FirebaseService.createGroup('G1', { name: 'A', section: 'north-lower' });
+      const code2 = FirebaseService.createGroup('G2', { name: 'B', section: 'south-lower' });
+      FirebaseService.joinGroup(code1, { name: 'C', section: 'east-lower' });
+      const g1 = FirebaseService.getGroup(code1);
+      const g2 = FirebaseService.getGroup(code2);
+      assertEqual(g1.members.length, 2);
+      assertEqual(g2.members.length, 1);
     });
 
     // Show results
