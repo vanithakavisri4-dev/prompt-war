@@ -16,6 +16,7 @@ Thank you for your interest in contributing to ArenaFlow AI! This document provi
 ## 📋 Development Guidelines
 
 ### Code Style
+
 - Follow the `.editorconfig` settings (2-space indentation, UTF-8)
 - Use `'use strict'` in all JavaScript modules
 - Use JSDoc comments for all public functions
@@ -23,6 +24,7 @@ Thank you for your interest in contributing to ArenaFlow AI! This document provi
 - Follow the IIFE module pattern used across the codebase
 
 ### JavaScript Conventions
+
 - Use `const` and `let` — never `var`
 - Use template literals for string interpolation
 - Always sanitize user input via `ArenaUtils.sanitize()` before DOM insertion
@@ -30,12 +32,14 @@ Thank you for your interest in contributing to ArenaFlow AI! This document provi
 - Use `crypto.getRandomValues()` instead of `Math.random()` for security-sensitive values
 
 ### Accessibility
+
 - All interactive elements must have `aria-label` or visible labels
 - Use semantic HTML5 elements (`<nav>`, `<main>`, `<section>`, etc.)
 - Maintain WCAG 2.1 AA compliance
 - Test with keyboard navigation and screen readers
 
 ### Testing
+
 - Add tests for new features in `tests/test.html`
 - Include edge case and boundary value tests
 - Test both success and failure paths
@@ -49,6 +53,7 @@ Thank you for your interest in contributing to ArenaFlow AI! This document provi
 ## 📝 Commit Message Convention
 
 Use conventional commits:
+
 - `feat:` — New feature
 - `fix:` — Bug fix
 - `docs:` — Documentation changes

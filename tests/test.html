@@ -1,33 +1,101 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ArenaFlow AI — Test Suite</title>
     <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Inter',system-ui,sans-serif;background:#0a0e1a;color:#f1f5f9;padding:2rem}
-        h1{font-size:1.5rem;margin-bottom:1.5rem;background:linear-gradient(135deg,#6c63ff,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-        .test-suite{margin-bottom:2rem}
-        .suite-title{font-size:1.1rem;font-weight:700;margin-bottom:.75rem;padding:.5rem;background:rgba(108,99,255,.1);border-radius:8px}
-        .test{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;margin:.25rem 0;border-radius:6px;font-size:.9rem}
-        .test.pass{background:rgba(16,185,129,.1)}
-        .test.fail{background:rgba(239,68,68,.1)}
-        .badge{font-size:.75rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;min-width:40px;text-align:center}
-        .badge.pass{background:#10b981;color:#fff}
-        .badge.fail{background:#ef4444;color:#fff}
-        .summary{margin-top:2rem;padding:1rem;background:rgba(108,99,255,.08);border-radius:10px;border:1px solid rgba(108,99,255,.2)}
-        .summary h2{font-size:1.1rem;margin-bottom:.5rem}
-        .stats{display:flex;gap:2rem;font-size:.95rem}
-        .stats span{font-weight:600}
-        .pass-count{color:#10b981}
-        .fail-count{color:#ef4444}
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: #0a0e1a;
+        color: #f1f5f9;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #6c63ff, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .test-suite {
+        margin-bottom: 2rem;
+      }
+      .suite-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(108, 99, 255, 0.1);
+        border-radius: 8px;
+      }
+      .test {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        margin: 0.25rem 0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+      }
+      .test.pass {
+        background: rgba(16, 185, 129, 0.1);
+      }
+      .test.fail {
+        background: rgba(239, 68, 68, 0.1);
+      }
+      .badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        min-width: 40px;
+        text-align: center;
+      }
+      .badge.pass {
+        background: #10b981;
+        color: #fff;
+      }
+      .badge.fail {
+        background: #ef4444;
+        color: #fff;
+      }
+      .summary {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(108, 99, 255, 0.08);
+        border-radius: 10px;
+        border: 1px solid rgba(108, 99, 255, 0.2);
+      }
+      .summary h2 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 0.95rem;
+      }
+      .stats span {
+        font-weight: 600;
+      }
+      .pass-count {
+        color: #10b981;
+      }
+      .fail-count {
+        color: #ef4444;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🧪 ArenaFlow AI — Test Suite</h1>
     <div id="test-output"></div>
-    <div id="summary" class="summary" style="display:none"></div>
+    <div id="summary" class="summary" style="display: none"></div>
 
     <!-- Load app modules -->
     <script src="../js/utils.js"></script>
@@ -39,750 +107,925 @@
     <script src="../js/firebase-config.js"></script>
     <script src="../js/accessibility.js"></script>
     <script>
-    'use strict';
-    const TestRunner = (() => {
-      let passed = 0, failed = 0;
-      const output = document.getElementById('test-output');
-      let currentSuite = null;
+      "use strict";
+      const TestRunner = (() => {
+        let passed = 0,
+          failed = 0;
+        const output = document.getElementById("test-output");
+        let currentSuite = null;
 
-      function suite(name) {
-        currentSuite = document.createElement('div');
-        currentSuite.className = 'test-suite';
-        currentSuite.innerHTML = `<div class="suite-title">📦 ${name}</div>`;
-        output.appendChild(currentSuite);
-      }
-
-      function test(name, fn) {
-        const div = document.createElement('div');
-        div.className = 'test';
-        try {
-          fn();
-          div.classList.add('pass');
-          div.innerHTML = `<span class="badge pass">PASS</span><span>${name}</span>`;
-          passed++;
-        } catch (e) {
-          div.classList.add('fail');
-          div.innerHTML = `<span class="badge fail">FAIL</span><span>${name} — ${e.message}</span>`;
-          failed++;
+        function suite(name) {
+          currentSuite = document.createElement("div");
+          currentSuite.className = "test-suite";
+          currentSuite.innerHTML = `<div class="suite-title">📦 ${name}</div>`;
+          output.appendChild(currentSuite);
         }
-        (currentSuite || output).appendChild(div);
-      }
 
-      function assert(cond, msg = 'Assertion failed') { if (!cond) throw new Error(msg); }
-      function assertEqual(a, b, msg) { assert(a === b, msg || `Expected ${b}, got ${a}`); }
-      function assertType(val, type, msg) { assert(typeof val === type, msg || `Expected type ${type}, got ${typeof val}`); }
+        function test(name, fn) {
+          const div = document.createElement("div");
+          div.className = "test";
+          try {
+            fn();
+            div.classList.add("pass");
+            div.innerHTML = `<span class="badge pass">PASS</span><span>${name}</span>`;
+            passed++;
+          } catch (e) {
+            div.classList.add("fail");
+            div.innerHTML = `<span class="badge fail">FAIL</span><span>${name} — ${e.message}</span>`;
+            failed++;
+          }
+          (currentSuite || output).appendChild(div);
+        }
 
-      function showSummary() {
-        const el = document.getElementById('summary');
-        el.style.display = 'block';
-        const total = passed + failed;
-        el.innerHTML = `<h2>📊 Test Results</h2>
+        function assert(cond, msg = "Assertion failed") {
+          if (!cond) throw new Error(msg);
+        }
+        function assertEqual(a, b, msg) {
+          assert(a === b, msg || `Expected ${b}, got ${a}`);
+        }
+        function assertType(val, type, msg) {
+          assert(
+            typeof val === type,
+            msg || `Expected type ${type}, got ${typeof val}`,
+          );
+        }
+
+        function showSummary() {
+          const el = document.getElementById("summary");
+          el.style.display = "block";
+          const total = passed + failed;
+          el.innerHTML = `<h2>📊 Test Results</h2>
           <div class="stats">
             <span>Total: ${total}</span>
             <span class="pass-count">Passed: ${passed}</span>
             <span class="fail-count">Failed: ${failed}</span>
-            <span>Rate: ${total ? Math.round(passed/total*100) : 0}%</span>
+            <span>Rate: ${total ? Math.round((passed / total) * 100) : 0}%</span>
           </div>`;
-      }
+        }
 
-      return { suite, test, assert, assertEqual, assertType, showSummary };
-    })();
+        return { suite, test, assert, assertEqual, assertType, showSummary };
+      })();
 
-    const { suite, test, assert, assertEqual, assertType, showSummary } = TestRunner;
+      const { suite, test, assert, assertEqual, assertType, showSummary } =
+        TestRunner;
 
-    // ===== UTILITY TESTS =====
-    suite('ArenaUtils — Core Utilities');
+      // ===== UTILITY TESTS =====
+      suite("ArenaUtils — Core Utilities");
 
-    test('sanitize() escapes HTML characters', () => {
-      const result = ArenaUtils.sanitize('\x3cscript\x3ealert("xss")\x3c/script\x3e');
-      assert(!result.includes('\x3cscript\x3e'), 'Should escape script tags');
-      assert(result.includes('&lt;'), 'Should contain &lt;');
-    });
-
-    test('sanitize() handles empty string', () => {
-      assertEqual(ArenaUtils.sanitize(''), '');
-    });
-
-    test('sanitize() handles special characters', () => {
-      const result = ArenaUtils.sanitize('Tom & Jerry "friends" \'forever\'');
-      assert(result.includes('&amp;'), 'Should escape ampersand');
-      assert(result.includes('&quot;'), 'Should escape quotes');
-    });
-
-    test('clamp() constrains values correctly', () => {
-      assertEqual(ArenaUtils.clamp(5, 0, 10), 5);
-      assertEqual(ArenaUtils.clamp(-5, 0, 10), 0);
-      assertEqual(ArenaUtils.clamp(15, 0, 10), 10);
-    });
-
-    test('lerp() interpolates correctly', () => {
-      assertEqual(ArenaUtils.lerp(0, 10, 0.5), 5);
-      assertEqual(ArenaUtils.lerp(0, 10, 0), 0);
-      assertEqual(ArenaUtils.lerp(0, 10, 1), 10);
-    });
-
-    test('randomId() generates correct length', () => {
-      assertEqual(ArenaUtils.randomId(6).length, 6);
-      assertEqual(ArenaUtils.randomId(12).length, 12);
-    });
-
-    test('randomId() generates unique IDs', () => {
-      const ids = new Set(Array.from({length: 50}, () => ArenaUtils.randomId(8)));
-      assert(ids.size >= 48, 'Should generate mostly unique IDs');
-    });
-
-    test('formatTime() returns valid time string', () => {
-      const time = ArenaUtils.formatTime(new Date());
-      assert(time.includes(':'), 'Should contain colon separator');
-    });
-
-    test('debounce() returns a function', () => {
-      const fn = ArenaUtils.debounce(() => {}, 100);
-      assertType(fn, 'function');
-    });
-
-    test('storage.set() and storage.get() work correctly', () => {
-      ArenaUtils.storage.set('test_key', { foo: 'bar' });
-      const result = ArenaUtils.storage.get('test_key');
-      assertEqual(result.foo, 'bar');
-      ArenaUtils.storage.remove('test_key');
-    });
-
-    test('storage.get() returns fallback for missing keys', () => {
-      const result = ArenaUtils.storage.get('nonexistent_key_xyz', 'default');
-      assertEqual(result, 'default');
-    });
-
-    // ===== CROWD ENGINE TESTS =====
-    suite('CrowdEngine — Crowd Simulation');
-
-    test('getSnapshot() returns valid data structure', () => {
-      const snap = CrowdEngine.getSnapshot();
-      assert(snap.timestamp > 0, 'Should have timestamp');
-      assert(Array.isArray(snap.zones), 'Should have zones array');
-      assert(snap.zones.length > 0, 'Should have at least one zone');
-      assertType(snap.avgDensity, 'number');
-      assertType(snap.totalAttendees, 'number');
-    });
-
-    test('Zone density values are within valid range', () => {
-      const snap = CrowdEngine.getSnapshot();
-      snap.zones.forEach(z => {
-        assert(z.density >= 0 && z.density <= 1, `${z.name} density ${z.density} out of range`);
+      test("sanitize() escapes HTML characters", () => {
+        const result = ArenaUtils.sanitize(
+          '\x3cscript\x3ealert("xss")\x3c/script\x3e',
+        );
+        assert(!result.includes("\x3cscript\x3e"), "Should escape script tags");
+        assert(result.includes("&lt;"), "Should contain &lt;");
       });
-    });
 
-    test('findLeastCrowded() returns valid zone', () => {
-      const zone = CrowdEngine.findLeastCrowded('food');
-      assert(zone !== null, 'Should find a food zone');
-      assertEqual(zone.type, 'food');
-    });
-
-    test('findLeastCrowded() returns least dense zone', () => {
-      const zone = CrowdEngine.findLeastCrowded('gate');
-      const allGates = CrowdEngine.ZONES.filter(z => z.type === 'gate');
-      const minDensity = Math.min(...allGates.map(z => z.density));
-      assertEqual(zone.density, minDensity);
-    });
-
-    test('getWaitTime() returns non-negative number', () => {
-      const wait = CrowdEngine.getWaitTime('food');
-      assert(wait >= 0, 'Wait time should be non-negative');
-      assert(wait <= 15, 'Wait time should not exceed 15 minutes');
-    });
-
-    test('predict() returns valid prediction', () => {
-      const pred = CrowdEngine.predict('food-nw', 10);
-      assert(pred.predicted >= 0 && pred.predicted <= 1, 'Predicted density in range');
-      assert(pred.confidence >= 0 && pred.confidence <= 1, 'Confidence in range');
-    });
-
-    test('generatePredictions() returns array of predictions', () => {
-      const preds = CrowdEngine.generatePredictions();
-      assert(Array.isArray(preds), 'Should return array');
-      assert(preds.length > 0, 'Should have predictions');
-      preds.forEach(p => {
-        assertType(p.time, 'string');
-        assertType(p.text, 'string');
-        assertType(p.confidence, 'string');
+      test("sanitize() handles empty string", () => {
+        assertEqual(ArenaUtils.sanitize(""), "");
       });
-    });
 
-    test('getSafetyIndex() returns valid percentage', () => {
-      const safety = CrowdEngine.getSafetyIndex();
-      assert(safety >= 0 && safety <= 100, `Safety ${safety} out of range`);
-    });
-
-    test('setPhase() changes event phase', () => {
-      CrowdEngine.setPhase('halftime');
-      assertEqual(CrowdEngine.getSnapshot().phase, 'halftime');
-      CrowdEngine.setPhase('pre-game'); // Reset
-    });
-
-    // ===== FLOW OPTIMIZER TESTS =====
-    suite('FlowOptimizer — Experience Optimization');
-
-    test('generateFlow() returns valid flow structure', () => {
-      const snap = CrowdEngine.getSnapshot();
-      const flow = FlowOptimizer.generateFlow({ section: 'north-lower', accessibility: 'none' }, snap);
-      assert(Array.isArray(flow.items), 'Should have items array');
-      assert(flow.items.length > 0, 'Should have flow items');
-      assertType(flow.totalTimeSaved, 'number');
-      assertType(flow.flowScore, 'number');
-    });
-
-    test('Flow items have required fields', () => {
-      const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
-      flow.items.forEach(item => {
-        assertType(item.label, 'string');
-        assertType(item.time, 'string');
-        assertType(item.icon, 'string');
-        assertType(item.density, 'number');
+      test("sanitize() handles special characters", () => {
+        const result = ArenaUtils.sanitize("Tom & Jerry \"friends\" 'forever'");
+        assert(result.includes("&amp;"), "Should escape ampersand");
+        assert(result.includes("&quot;"), "Should escape quotes");
       });
-    });
 
-    test('Flow score is within valid range', () => {
-      const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
-      assert(flow.flowScore >= 0 && flow.flowScore <= 100, 'Flow score in range');
-    });
-
-    test('Wheelchair accessibility increases duration', () => {
-      const snap = CrowdEngine.getSnapshot();
-      const normal = FlowOptimizer.generateFlow({ accessibility: 'none' }, snap);
-      const wheelchair = FlowOptimizer.generateFlow({ accessibility: 'wheelchair' }, snap);
-      // Wheelchair flow should generally exist
-      assert(wheelchair.items.length > 0, 'Wheelchair flow should have items');
-    });
-
-    test('findMeetingPoint() returns valid result', () => {
-      const result = FlowOptimizer.findMeetingPoint(['north-lower', 'south-lower'], CrowdEngine.getSnapshot());
-      assert(result.zone !== null, 'Should find a meeting zone');
-      assertType(result.message, 'string');
-    });
-
-    // ===== GEMINI SERVICE TESTS =====
-    suite('GeminiService — AI Concierge');
-
-    test('chat() returns response for food query', async () => {
-      const response = await GeminiService.chat('Where can I find food?', { snapshot: CrowdEngine.getSnapshot() });
-      assertType(response, 'string');
-      assert(response.length > 0, 'Should return non-empty response');
-    });
-
-    test('chat() returns response for restroom query', async () => {
-      const response = await GeminiService.chat('Where is the nearest restroom?', {});
-      assert(response.includes('Restroom') || response.includes('restroom') || response.includes('🚻'), 'Should mention restroom');
-    });
-
-    test('chat() returns response for unknown query', async () => {
-      const response = await GeminiService.chat('Tell me something random', {});
-      assertType(response, 'string');
-      assert(response.length > 10, 'Should return helpful response');
-    });
-
-    test('translate() returns original text for English', async () => {
-      const result = await GeminiService.translate('Hello', 'en');
-      assertEqual(result, 'Hello');
-    });
-
-    // ===== FIREBASE SERVICE TESTS =====
-    suite('FirebaseService — Data Sync');
-
-    test('isConfigured() returns false without config', () => {
-      assertEqual(FirebaseService.isConfigured(), false);
-    });
-
-    test('createGroup() returns valid group code', () => {
-      const code = FirebaseService.createGroup('Test Group', { name: 'Alice', section: 'north-lower' });
-      assert(code.startsWith('ARENA-'), 'Code should start with ARENA-');
-      assertEqual(code.length, 10); // ARENA- + 4 chars
-    });
-
-    test('joinGroup() adds member to group', () => {
-      const code = FirebaseService.createGroup('Join Test', { name: 'Bob', section: 'south-lower' });
-      const group = FirebaseService.joinGroup(code, { name: 'Carol', section: 'east-lower' });
-      assert(group.members.length >= 2, 'Should have at least 2 members');
-    });
-
-    test('getGroup() retrieves created group', () => {
-      const code = FirebaseService.createGroup('Get Test', { name: 'Dave', section: 'west-lower' });
-      const group = FirebaseService.getGroup(code);
-      assert(group !== null, 'Should retrieve group');
-      assertEqual(group.code, code);
-    });
-
-    // ===== SECURITY TESTS =====
-    suite('Security — Input Validation');
-
-    test('XSS prevention in sanitize()', () => {
-      const attacks = [
-        '\x3cimg src=x onerror=alert(1)\x3e',
-        'javascript:alert(1)',
-        '\x3csvg onload=alert(1)\x3e',
-        '"\x3e\x3c' + 'script\x3ealert(document.cookie)\x3c/' + 'script\x3e',
-      ];
-      attacks.forEach(a => {
-        const s = ArenaUtils.sanitize(a);
-        assert(!s.includes('\x3cscript\x3e'), 'Should sanitize: ' + a.substring(0,20));
-        assert(!s.includes('\x3cimg'), 'Should sanitize img: ' + a.substring(0,20));
-        assert(!s.includes('\x3csvg'), 'Should sanitize svg: ' + a.substring(0,20));
+      test("clamp() constrains values correctly", () => {
+        assertEqual(ArenaUtils.clamp(5, 0, 10), 5);
+        assertEqual(ArenaUtils.clamp(-5, 0, 10), 0);
+        assertEqual(ArenaUtils.clamp(15, 0, 10), 10);
       });
-    });
 
-    test('ID generation uses crypto API', () => {
-      const id = ArenaUtils.randomId(16);
-      assertEqual(id.length, 16);
-      assert(/^[A-Z0-9]+$/.test(id), 'Should be alphanumeric uppercase');
-    });
+      test("lerp() interpolates correctly", () => {
+        assertEqual(ArenaUtils.lerp(0, 10, 0.5), 5);
+        assertEqual(ArenaUtils.lerp(0, 10, 0), 0);
+        assertEqual(ArenaUtils.lerp(0, 10, 1), 10);
+      });
 
-    // ===== GOOGLE CLOUD SERVICE TESTS =====
-    suite('GoogleCloudService — Cloud Run & Logging');
+      test("randomId() generates correct length", () => {
+        assertEqual(ArenaUtils.randomId(6).length, 6);
+        assertEqual(ArenaUtils.randomId(12).length, 12);
+      });
 
-    test('init() initializes without error', () => {
-      GoogleCloudService.init();
-      assert(true, 'Should initialize without throwing');
-    });
+      test("randomId() generates unique IDs", () => {
+        const ids = new Set(
+          Array.from({ length: 50 }, () => ArenaUtils.randomId(8)),
+        );
+        assert(ids.size >= 48, "Should generate mostly unique IDs");
+      });
 
-    test('getConfig() returns valid GCP configuration', () => {
-      const config = GoogleCloudService.getConfig();
-      assertType(config.projectId, 'string');
-      assertType(config.region, 'string');
-      assertType(config.serviceName, 'string');
-      assertEqual(config.projectId, 'prompt-war-493707');
-      assertEqual(config.region, 'us-central1');
-    });
+      test("formatTime() returns valid time string", () => {
+        const time = ArenaUtils.formatTime(new Date());
+        assert(time.includes(":"), "Should contain colon separator");
+      });
 
-    test('healthCheck() returns healthy status with all module checks', () => {
-      const health = GoogleCloudService.healthCheck();
-      assertEqual(health.status, 'healthy');
-      assertType(health.timestamp, 'string');
-      assert(health.uptime >= 0, 'Uptime should be non-negative');
-      assertEqual(health.checks.crowdEngine, 'ok');
-      assertEqual(health.checks.geminiService, 'ok');
-      assertEqual(health.checks.googleCloudService, 'ok');
-      assertType(health.revision, 'object'); // null is object
-    });
+      test("debounce() returns a function", () => {
+        const fn = ArenaUtils.debounce(() => {}, 100);
+        assertType(fn, "function");
+      });
 
-    test('getPerformanceMetrics() returns Cloud Monitoring metrics', () => {
-      const metrics = GoogleCloudService.getPerformanceMetrics();
-      assertType(metrics.domContentLoaded, 'number');
-      assertType(metrics.firstPaint, 'number');
-      assertType(metrics.firstContentfulPaint, 'number');
-      assertType(metrics.ttfb, 'number');
-      assertType(metrics.resourceCount, 'number');
-    });
+      test("storage.set() and storage.get() work correctly", () => {
+        ArenaUtils.storage.set("test_key", { foo: "bar" });
+        const result = ArenaUtils.storage.get("test_key");
+        assertEqual(result.foo, "bar");
+        ArenaUtils.storage.remove("test_key");
+      });
 
-    test('log() handles all Cloud Logging severity levels', () => {
-      const { Severity } = GoogleCloudService;
-      GoogleCloudService.log(Severity.DEBUG, 'Test debug');
-      GoogleCloudService.log(Severity.INFO, 'Test info');
-      GoogleCloudService.log(Severity.WARNING, 'Test warning');
-      GoogleCloudService.log(Severity.ERROR, 'Test error', { code: 500 });
-      GoogleCloudService.log(Severity.CRITICAL, 'Test critical');
-      GoogleCloudService.log(Severity.NOTICE, 'Test notice');
-      assert(true, 'All severity levels logged without error');
-    });
+      test("storage.get() returns fallback for missing keys", () => {
+        const result = ArenaUtils.storage.get("nonexistent_key_xyz", "default");
+        assertEqual(result, "default");
+      });
 
-    test('Severity enum is frozen/immutable', () => {
-      const { Severity } = GoogleCloudService;
-      assertType(Severity.INFO, 'string');
-      assertEqual(Severity.CRITICAL, 'CRITICAL');
-      try { Severity.NEW_LEVEL = 'test'; } catch(e) { /* strict mode */ }
-      assert(!Severity.NEW_LEVEL, 'Severity should be immutable');
-    });
+      // ===== CROWD ENGINE TESTS =====
+      suite("CrowdEngine — Crowd Simulation");
 
-    suite('GoogleCloudService — Analytics & Cloud Functions');
-
-    test('trackEvent() records GA4 events without error', () => {
-      GoogleCloudService.trackEvent('test_event', { category: 'test' });
-      GoogleCloudService.trackEvent('view_change', { view_name: 'dashboard' });
-      assert(true, 'Events tracked without error');
-    });
-
-    test('submitToCloudFunction() handles missing data gracefully', async () => {
-      const result = await GoogleCloudService.submitToCloudFunction({});
-      // Should not throw — returns null on failure/rate-limit
-      assert(result === null || typeof result === 'object', 'Should handle gracefully');
-    });
-
-    test('flushAnalytics() runs without error', () => {
-      GoogleCloudService.trackEvent('flush_test', {});
-      GoogleCloudService.flushAnalytics();
-      assert(true, 'Analytics flushed without error');
-    });
-
-    suite('GoogleCloudService — BigQuery & Vertex AI');
-
-    test('queryBigQueryAnalytics() returns historical data with fallback', async () => {
-      const data = await GoogleCloudService.queryBigQueryAnalytics('stadium-alpha', 3);
-      assert(data !== null, 'Should return data');
-      assertType(data.totalRows, 'number');
-      assert(data.rows.length > 0, 'Should have historical rows');
-      assertEqual(data.source, 'local-estimate');
-    });
-
-    test('predictWithVertexAI() returns prediction with local fallback', async () => {
-      const pred = await GoogleCloudService.predictWithVertexAI('food-nw', 10, CrowdEngine.getSnapshot());
-      assertType(pred.predicted, 'number');
-      assertType(pred.confidence, 'number');
-      assertType(pred.source, 'string');
-      assert(pred.predicted >= 0 && pred.predicted <= 1, 'Prediction in range');
-    });
-
-    test('predictWithVertexAI() handles unknown zone gracefully', async () => {
-      const pred = await GoogleCloudService.predictWithVertexAI('unknown-zone', 5);
-      assertType(pred.predicted, 'number');
-      assert(pred.source === 'local-engine' || pred.source === 'default', 'Should use fallback');
-    });
-
-    test('dispose() cleans up resources without error', () => {
-      // Should not throw
-      GoogleCloudService.dispose();
-      assert(true, 'Disposed without error');
-      // Re-init for subsequent tests
-      GoogleCloudService.init();
-    });
-
-    // ===== EDGE CASE TESTS =====
-    suite('Edge Cases — Boundary & Error Conditions');
-
-    test('sanitize() handles null/undefined input', () => {
-      assertType(ArenaUtils.sanitize(null), 'string');
-      assertType(ArenaUtils.sanitize(undefined), 'string');
-    });
-
-    test('sanitize() handles numeric input', () => {
-      assertEqual(ArenaUtils.sanitize(42), '42');
-      assertEqual(ArenaUtils.sanitize(0), '0');
-    });
-
-    test('clamp() handles equal min and max', () => {
-      assertEqual(ArenaUtils.clamp(5, 3, 3), 3);
-    });
-
-    test('lerp() clamps t outside 0-1 range', () => {
-      assertEqual(ArenaUtils.lerp(0, 10, -1), 0);
-      assertEqual(ArenaUtils.lerp(0, 10, 2), 10);
-    });
-
-    test('CrowdEngine handles unknown zone type gracefully', () => {
-      assertEqual(CrowdEngine.findLeastCrowded('nonexistent'), null);
-    });
-
-    test('CrowdEngine.getWaitTime() returns 0 for unknown type', () => {
-      assertEqual(CrowdEngine.getWaitTime('nonexistent'), 0);
-    });
-
-    test('CrowdEngine.predict() handles unknown zone ID', () => {
-      const pred = CrowdEngine.predict('nonexistent-zone', 10);
-      assertEqual(pred.predicted, 0.5);
-      assertEqual(pred.confidence, 0);
-    });
-
-    test('CrowdEngine.setPhase() rejects invalid phase', () => {
-      CrowdEngine.setPhase('invalid-phase');
-      assert(CrowdEngine.getSnapshot().phase !== 'invalid-phase', 'Should not set invalid phase');
-      CrowdEngine.setPhase('pre-game');
-    });
-
-    test('FlowOptimizer handles null profile gracefully', () => {
-      const flow = FlowOptimizer.generateFlow(null, CrowdEngine.getSnapshot());
-      assert(flow.items.length > 0, 'Should still generate flow items');
-    });
-
-    test('FlowOptimizer.findMeetingPoint() handles empty sections', () => {
-      const result = FlowOptimizer.findMeetingPoint([], CrowdEngine.getSnapshot());
-      assert(result.zone !== undefined, 'Should return a zone');
-    });
-
-    test('FirebaseService.joinGroup() handles non-existent code', () => {
-      const group = FirebaseService.joinGroup('ARENA-ZZZZ', { name: 'Test', section: 'north-lower' });
-      assert(group !== null, 'Should create fallback group');
-    });
-
-    test('FirebaseService.getGroup() returns null for unknown code', () => {
-      const group = FirebaseService.getGroup('NONEXISTENT');
-      assertEqual(group, null);
-    });
-
-    test('GeminiService.chat() handles empty context object', async () => {
-      const response = await GeminiService.chat('Hello', {});
-      assertType(response, 'string');
-      assert(response.length > 0, 'Should return non-empty response');
-    });
-
-    // ===== PERFORMANCE & EFFICIENCY TESTS =====
-    suite('Performance — Efficiency & Resource Optimization');
-
-    test('CrowdEngine: 100 snapshots in < 500ms', () => {
-      const start = performance.now();
-      for (let i = 0; i < 100; i++) CrowdEngine.getSnapshot();
-      const elapsed = performance.now() - start;
-      assert(elapsed < 500, `Took ${elapsed.toFixed(1)}ms`);
-    });
-
-    test('FlowOptimizer: flow generation in < 100ms', () => {
-      const start = performance.now();
-      FlowOptimizer.generateFlow({ section: 'north-lower' }, CrowdEngine.getSnapshot());
-      assert(performance.now() - start < 100, 'Should complete quickly');
-    });
-
-    test('sanitize(): 1000 XSS payloads in < 50ms', () => {
-      const input = '<script>'.repeat(1000);
-      const start = performance.now();
-      ArenaUtils.sanitize(input);
-      assert(performance.now() - start < 50, 'Should handle large inputs efficiently');
-    });
-
-    test('CrowdEngine.generatePredictions() in < 50ms', () => {
-      const start = performance.now();
-      CrowdEngine.generatePredictions();
-      assert(performance.now() - start < 50, 'Predictions should be fast');
-    });
-
-    test('GoogleCloudService.healthCheck() in < 20ms', () => {
-      const start = performance.now();
-      GoogleCloudService.healthCheck();
-      assert(performance.now() - start < 20, 'Health check should be fast');
-    });
-
-    // ===== REGRESSION TESTS =====
-    suite('Regression — Stability Validation');
-
-    test('CrowdEngine zones maintain valid density after multiple ticks', () => {
-      CrowdEngine.setPhase('halftime');
-      for (let i = 0; i < 10; i++) {
+      test("getSnapshot() returns valid data structure", () => {
         const snap = CrowdEngine.getSnapshot();
-        snap.zones.forEach(z => {
-          assert(z.density >= 0 && z.density <= 1, `${z.name} density ${z.density} invalid after tick ${i}`);
+        assert(snap.timestamp > 0, "Should have timestamp");
+        assert(Array.isArray(snap.zones), "Should have zones array");
+        assert(snap.zones.length > 0, "Should have at least one zone");
+        assertType(snap.avgDensity, "number");
+        assertType(snap.totalAttendees, "number");
+      });
+
+      test("Zone density values are within valid range", () => {
+        const snap = CrowdEngine.getSnapshot();
+        snap.zones.forEach((z) => {
+          assert(
+            z.density >= 0 && z.density <= 1,
+            `${z.name} density ${z.density} out of range`,
+          );
         });
-      }
-      CrowdEngine.setPhase('pre-game');
-    });
-
-    test('FlowOptimizer produces consistent structure across profiles', () => {
-      const profiles = [
-        { section: 'north-lower', accessibility: 'none' },
-        { section: 'south-upper', accessibility: 'wheelchair' },
-        { section: 'vip', accessibility: 'elderly' },
-      ];
-      profiles.forEach(p => {
-        const flow = FlowOptimizer.generateFlow(p, CrowdEngine.getSnapshot());
-        assert(Array.isArray(flow.items), 'Items should be array');
-        assertType(flow.totalTimeSaved, 'number');
-        assertType(flow.flowScore, 'number');
-        assert(flow.flowScore >= 0 && flow.flowScore <= 100, 'Score in range');
       });
-    });
 
-    test('Multiple group create/join cycles work correctly', () => {
-      const code1 = FirebaseService.createGroup('G1', { name: 'A', section: 'north-lower' });
-      const code2 = FirebaseService.createGroup('G2', { name: 'B', section: 'south-lower' });
-      FirebaseService.joinGroup(code1, { name: 'C', section: 'east-lower' });
-      const g1 = FirebaseService.getGroup(code1);
-      const g2 = FirebaseService.getGroup(code2);
-      assertEqual(g1.members.length, 2);
-      assertEqual(g2.members.length, 1);
-    });
-
-    // ===== MAPS SERVICE TESTS =====
-    suite('MapsService — Stadium Visualization');
-
-    test('MapsService module is defined', () => {
-      assertType(MapsService, 'object');
-      assertType(MapsService.init, 'function');
-      assertType(MapsService.setLayer, 'function');
-      assertType(MapsService.stop, 'function');
-    });
-
-    test('init() handles missing canvas ID gracefully', () => {
-      MapsService.init('nonexistent-canvas-id');
-      assert(true, 'Should not throw for missing canvas');
-    });
-
-    test('setLayer() accepts all valid layer types', () => {
-      const layers = ['crowd', 'food', 'facilities', 'exits'];
-      layers.forEach(layer => {
-        MapsService.setLayer(layer);
-        assert(true, `Should accept layer: ${layer}`);
+      test("findLeastCrowded() returns valid zone", () => {
+        const zone = CrowdEngine.findLeastCrowded("food");
+        assert(zone !== null, "Should find a food zone");
+        assertEqual(zone.type, "food");
       });
-    });
 
-    test('stop() runs without error when no animation is active', () => {
-      MapsService.stop();
-      assert(true, 'Should stop without error');
-    });
-
-    test('init() with valid canvas element starts rendering', () => {
-      const canvas = document.createElement('canvas');
-      canvas.id = 'test-map-canvas';
-      canvas.width = 400;
-      canvas.height = 240;
-      document.body.appendChild(canvas);
-      MapsService.init('test-map-canvas');
-      MapsService.stop();
-      canvas.remove();
-      assert(true, 'Should init and stop cleanly');
-    });
-
-    // ===== ACCESSIBILITY SERVICE TESTS =====
-    suite('AccessibilityService — WCAG 2.1 AA Compliance');
-
-    test('AccessibilityService module is defined with full API', () => {
-      assertType(AccessibilityService, 'object');
-      assertType(AccessibilityService.init, 'function');
-      assertType(AccessibilityService.applyFontScale, 'function');
-      assertType(AccessibilityService.increaseFontSize, 'function');
-      assertType(AccessibilityService.toggleHighContrast, 'function');
-      assertType(AccessibilityService.toggleReduceMotion, 'function');
-      assertType(AccessibilityService.announce, 'function');
-      assertType(AccessibilityService.setTheme, 'function');
-    });
-
-    test('applyFontScale() clamps values within valid range', () => {
-      AccessibilityService.applyFontScale(0.5);
-      const scale1 = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
-      assert(parseFloat(scale1) >= 0.8, 'Should clamp to minimum 0.8');
-
-      AccessibilityService.applyFontScale(2.0);
-      const scale2 = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
-      assert(parseFloat(scale2) <= 1.5, 'Should clamp to maximum 1.5');
-
-      AccessibilityService.applyFontScale(1.0);
-    });
-
-    test('toggleHighContrast() applies data-theme attribute', () => {
-      AccessibilityService.toggleHighContrast(true);
-      assertEqual(document.documentElement.getAttribute('data-theme'), 'high-contrast');
-      AccessibilityService.toggleHighContrast(false);
-      assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
-    });
-
-    test('toggleReduceMotion() toggles CSS class', () => {
-      AccessibilityService.toggleReduceMotion(true);
-      assert(document.documentElement.classList.contains('reduce-motion'), 'Should add reduce-motion class');
-      AccessibilityService.toggleReduceMotion(false);
-      assert(!document.documentElement.classList.contains('reduce-motion'), 'Should remove reduce-motion class');
-    });
-
-    test('setTheme() switches between dark and light', () => {
-      AccessibilityService.setTheme('light');
-      assertEqual(document.documentElement.getAttribute('data-theme'), 'light');
-      AccessibilityService.setTheme('dark');
-      assertEqual(document.documentElement.getAttribute('data-theme'), 'dark');
-    });
-
-    test('announce() creates and removes sr-only element', () => {
-      const before = document.querySelectorAll('.sr-only').length;
-      AccessibilityService.announce('Test announcement');
-      const after = document.querySelectorAll('.sr-only').length;
-      assert(after > before, 'Should add sr-only element');
-    });
-
-    test('increaseFontSize() changes scale value', () => {
-      AccessibilityService.applyFontScale(1.0);
-      AccessibilityService.increaseFontSize(0.1);
-      const scale = getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim();
-      assert(parseFloat(scale) >= 1.0, 'Should increase font scale');
-      AccessibilityService.applyFontScale(1.0);
-    });
-
-    // ===== ASYNC ERROR HANDLING TESTS =====
-    suite('Async Error Handling — Graceful Degradation');
-
-    test('GeminiService.chat() handles concurrent calls', async () => {
-      const p1 = GeminiService.chat('Where is food?', {});
-      const p2 = GeminiService.chat('Exit info?', {});
-      const [r1, r2] = await Promise.all([p1, p2]);
-      assertType(r1, 'string');
-      assertType(r2, 'string');
-    });
-
-    test('GeminiService.translate() handles invalid language code', async () => {
-      const result = await GeminiService.translate('Hello', 'xx-invalid');
-      assertEqual(result, 'Hello', 'Should return original text for unknown language');
-    });
-
-    test('GoogleCloudService.submitToCloudFunction() handles rapid calls', async () => {
-      const r1 = await GoogleCloudService.submitToCloudFunction(CrowdEngine.getSnapshot());
-      const r2 = await GoogleCloudService.submitToCloudFunction(CrowdEngine.getSnapshot());
-      // Second call should be rate-limited
-      assert(r2 === null || typeof r2 === 'object', 'Should handle rate limiting');
-    });
-
-    test('GoogleCloudService.predictWithVertexAI() handles concurrent predictions', async () => {
-      const promises = ['food-nw', 'gate-a', 'restroom-n'].map(
-        zone => GoogleCloudService.predictWithVertexAI(zone, 5, CrowdEngine.getSnapshot())
-      );
-      const results = await Promise.all(promises);
-      results.forEach(r => {
-        assertType(r.predicted, 'number');
-        assertType(r.confidence, 'number');
+      test("findLeastCrowded() returns least dense zone", () => {
+        const zone = CrowdEngine.findLeastCrowded("gate");
+        const allGates = CrowdEngine.ZONES.filter((z) => z.type === "gate");
+        const minDensity = Math.min(...allGates.map((z) => z.density));
+        assertEqual(zone.density, minDensity);
       });
-    });
 
-    // ===== DOM / INTEGRATION TESTS =====
-    suite('DOM Integration — Component Structure');
-
-    test('ArenaUtils.$() returns null for missing selectors', () => {
-      assertEqual(ArenaUtils.$('#nonexistent-element-xyz'), null);
-    });
-
-    test('ArenaUtils.$$() returns empty NodeList for missing selectors', () => {
-      const result = ArenaUtils.$$('.nonexistent-class-xyz');
-      assertEqual(result.length, 0);
-    });
-
-    test('validateForm() returns false for empty required field', () => {
-      const form = document.createElement('form');
-      const input = document.createElement('input');
-      input.required = true;
-      input.value = '';
-      form.appendChild(input);
-      assertEqual(ArenaUtils.validateForm(form), false);
-    });
-
-    test('validateForm() returns true for filled required field', () => {
-      const form = document.createElement('form');
-      const input = document.createElement('input');
-      input.required = true;
-      input.value = 'test';
-      form.appendChild(input);
-      assertEqual(ArenaUtils.validateForm(form), true);
-    });
-
-    test('showToast() creates toast element with correct role', () => {
-      const container = document.createElement('div');
-      container.id = 'toast-container';
-      document.body.appendChild(container);
-      ArenaUtils.showToast('Test toast', 'success');
-      const toasts = container.querySelectorAll('.toast');
-      assert(toasts.length > 0, 'Should create toast element');
-      const toast = toasts[toasts.length - 1];
-      assertEqual(toast.getAttribute('role'), 'status');
-      container.remove();
-    });
-
-    test('CrowdEngine.start() and stop() cycle works correctly', () => {
-      CrowdEngine.start(5000);
-      CrowdEngine.stop();
-      assert(true, 'Start/stop cycle should complete without error');
-    });
-
-    test('FlowOptimizer ACTIVITY_CATALOG has valid entries', () => {
-      assert(Array.isArray(FlowOptimizer.ACTIVITY_CATALOG), 'Should be an array');
-      assert(FlowOptimizer.ACTIVITY_CATALOG.length > 0, 'Should have activities');
-      FlowOptimizer.ACTIVITY_CATALOG.forEach(a => {
-        assertType(a.id, 'string');
-        assertType(a.label, 'string');
-        assertType(a.baseDuration, 'number');
-        assert(a.baseDuration > 0, 'Duration should be positive');
+      test("getWaitTime() returns non-negative number", () => {
+        const wait = CrowdEngine.getWaitTime("food");
+        assert(wait >= 0, "Wait time should be non-negative");
+        assert(wait <= 15, "Wait time should not exceed 15 minutes");
       });
-    });
 
-    // Show results
-    showSummary();
+      test("predict() returns valid prediction", () => {
+        const pred = CrowdEngine.predict("food-nw", 10);
+        assert(
+          pred.predicted >= 0 && pred.predicted <= 1,
+          "Predicted density in range",
+        );
+        assert(
+          pred.confidence >= 0 && pred.confidence <= 1,
+          "Confidence in range",
+        );
+      });
+
+      test("generatePredictions() returns array of predictions", () => {
+        const preds = CrowdEngine.generatePredictions();
+        assert(Array.isArray(preds), "Should return array");
+        assert(preds.length > 0, "Should have predictions");
+        preds.forEach((p) => {
+          assertType(p.time, "string");
+          assertType(p.text, "string");
+          assertType(p.confidence, "string");
+        });
+      });
+
+      test("getSafetyIndex() returns valid percentage", () => {
+        const safety = CrowdEngine.getSafetyIndex();
+        assert(safety >= 0 && safety <= 100, `Safety ${safety} out of range`);
+      });
+
+      test("setPhase() changes event phase", () => {
+        CrowdEngine.setPhase("halftime");
+        assertEqual(CrowdEngine.getSnapshot().phase, "halftime");
+        CrowdEngine.setPhase("pre-game"); // Reset
+      });
+
+      // ===== FLOW OPTIMIZER TESTS =====
+      suite("FlowOptimizer — Experience Optimization");
+
+      test("generateFlow() returns valid flow structure", () => {
+        const snap = CrowdEngine.getSnapshot();
+        const flow = FlowOptimizer.generateFlow(
+          { section: "north-lower", accessibility: "none" },
+          snap,
+        );
+        assert(Array.isArray(flow.items), "Should have items array");
+        assert(flow.items.length > 0, "Should have flow items");
+        assertType(flow.totalTimeSaved, "number");
+        assertType(flow.flowScore, "number");
+      });
+
+      test("Flow items have required fields", () => {
+        const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+        flow.items.forEach((item) => {
+          assertType(item.label, "string");
+          assertType(item.time, "string");
+          assertType(item.icon, "string");
+          assertType(item.density, "number");
+        });
+      });
+
+      test("Flow score is within valid range", () => {
+        const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+        assert(
+          flow.flowScore >= 0 && flow.flowScore <= 100,
+          "Flow score in range",
+        );
+      });
+
+      test("Wheelchair accessibility increases duration", () => {
+        const snap = CrowdEngine.getSnapshot();
+        const normal = FlowOptimizer.generateFlow(
+          { accessibility: "none" },
+          snap,
+        );
+        const wheelchair = FlowOptimizer.generateFlow(
+          { accessibility: "wheelchair" },
+          snap,
+        );
+        // Wheelchair flow should generally exist
+        assert(
+          wheelchair.items.length > 0,
+          "Wheelchair flow should have items",
+        );
+      });
+
+      test("findMeetingPoint() returns valid result", () => {
+        const result = FlowOptimizer.findMeetingPoint(
+          ["north-lower", "south-lower"],
+          CrowdEngine.getSnapshot(),
+        );
+        assert(result.zone !== null, "Should find a meeting zone");
+        assertType(result.message, "string");
+      });
+
+      // ===== GEMINI SERVICE TESTS =====
+      suite("GeminiService — AI Concierge");
+
+      test("chat() returns response for food query", async () => {
+        const response = await GeminiService.chat("Where can I find food?", {
+          snapshot: CrowdEngine.getSnapshot(),
+        });
+        assertType(response, "string");
+        assert(response.length > 0, "Should return non-empty response");
+      });
+
+      test("chat() returns response for restroom query", async () => {
+        const response = await GeminiService.chat(
+          "Where is the nearest restroom?",
+          {},
+        );
+        assert(
+          response.includes("Restroom") ||
+            response.includes("restroom") ||
+            response.includes("🚻"),
+          "Should mention restroom",
+        );
+      });
+
+      test("chat() returns response for unknown query", async () => {
+        const response = await GeminiService.chat(
+          "Tell me something random",
+          {},
+        );
+        assertType(response, "string");
+        assert(response.length > 10, "Should return helpful response");
+      });
+
+      test("translate() returns original text for English", async () => {
+        const result = await GeminiService.translate("Hello", "en");
+        assertEqual(result, "Hello");
+      });
+
+      // ===== FIREBASE SERVICE TESTS =====
+      suite("FirebaseService — Data Sync");
+
+      test("isConfigured() returns false without config", () => {
+        assertEqual(FirebaseService.isConfigured(), false);
+      });
+
+      test("createGroup() returns valid group code", () => {
+        const code = FirebaseService.createGroup("Test Group", {
+          name: "Alice",
+          section: "north-lower",
+        });
+        assert(code.startsWith("ARENA-"), "Code should start with ARENA-");
+        assertEqual(code.length, 10); // ARENA- + 4 chars
+      });
+
+      test("joinGroup() adds member to group", () => {
+        const code = FirebaseService.createGroup("Join Test", {
+          name: "Bob",
+          section: "south-lower",
+        });
+        const group = FirebaseService.joinGroup(code, {
+          name: "Carol",
+          section: "east-lower",
+        });
+        assert(group.members.length >= 2, "Should have at least 2 members");
+      });
+
+      test("getGroup() retrieves created group", () => {
+        const code = FirebaseService.createGroup("Get Test", {
+          name: "Dave",
+          section: "west-lower",
+        });
+        const group = FirebaseService.getGroup(code);
+        assert(group !== null, "Should retrieve group");
+        assertEqual(group.code, code);
+      });
+
+      // ===== SECURITY TESTS =====
+      suite("Security — Input Validation");
+
+      test("XSS prevention in sanitize()", () => {
+        const attacks = [
+          "\x3cimg src=x onerror=alert(1)\x3e",
+          "javascript:alert(1)",
+          "\x3csvg onload=alert(1)\x3e",
+          '"\x3e\x3c' + "script\x3ealert(document.cookie)\x3c/" + "script\x3e",
+        ];
+        attacks.forEach((a) => {
+          const s = ArenaUtils.sanitize(a);
+          assert(
+            !s.includes("\x3cscript\x3e"),
+            "Should sanitize: " + a.substring(0, 20),
+          );
+          assert(
+            !s.includes("\x3cimg"),
+            "Should sanitize img: " + a.substring(0, 20),
+          );
+          assert(
+            !s.includes("\x3csvg"),
+            "Should sanitize svg: " + a.substring(0, 20),
+          );
+        });
+      });
+
+      test("ID generation uses crypto API", () => {
+        const id = ArenaUtils.randomId(16);
+        assertEqual(id.length, 16);
+        assert(/^[A-Z0-9]+$/.test(id), "Should be alphanumeric uppercase");
+      });
+
+      // ===== GOOGLE CLOUD SERVICE TESTS =====
+      suite("GoogleCloudService — Cloud Run & Logging");
+
+      test("init() initializes without error", () => {
+        GoogleCloudService.init();
+        assert(true, "Should initialize without throwing");
+      });
+
+      test("getConfig() returns valid GCP configuration", () => {
+        const config = GoogleCloudService.getConfig();
+        assertType(config.projectId, "string");
+        assertType(config.region, "string");
+        assertType(config.serviceName, "string");
+        assertEqual(config.projectId, "prompt-war-493707");
+        assertEqual(config.region, "us-central1");
+      });
+
+      test("healthCheck() returns healthy status with all module checks", () => {
+        const health = GoogleCloudService.healthCheck();
+        assertEqual(health.status, "healthy");
+        assertType(health.timestamp, "string");
+        assert(health.uptime >= 0, "Uptime should be non-negative");
+        assertEqual(health.checks.crowdEngine, "ok");
+        assertEqual(health.checks.geminiService, "ok");
+        assertEqual(health.checks.googleCloudService, "ok");
+        assertType(health.revision, "object"); // null is object
+      });
+
+      test("getPerformanceMetrics() returns Cloud Monitoring metrics", () => {
+        const metrics = GoogleCloudService.getPerformanceMetrics();
+        assertType(metrics.domContentLoaded, "number");
+        assertType(metrics.firstPaint, "number");
+        assertType(metrics.firstContentfulPaint, "number");
+        assertType(metrics.ttfb, "number");
+        assertType(metrics.resourceCount, "number");
+      });
+
+      test("log() handles all Cloud Logging severity levels", () => {
+        const { Severity } = GoogleCloudService;
+        GoogleCloudService.log(Severity.DEBUG, "Test debug");
+        GoogleCloudService.log(Severity.INFO, "Test info");
+        GoogleCloudService.log(Severity.WARNING, "Test warning");
+        GoogleCloudService.log(Severity.ERROR, "Test error", { code: 500 });
+        GoogleCloudService.log(Severity.CRITICAL, "Test critical");
+        GoogleCloudService.log(Severity.NOTICE, "Test notice");
+        assert(true, "All severity levels logged without error");
+      });
+
+      test("Severity enum is frozen/immutable", () => {
+        const { Severity } = GoogleCloudService;
+        assertType(Severity.INFO, "string");
+        assertEqual(Severity.CRITICAL, "CRITICAL");
+        try {
+          Severity.NEW_LEVEL = "test";
+        } catch (e) {
+          /* strict mode */
+        }
+        assert(!Severity.NEW_LEVEL, "Severity should be immutable");
+      });
+
+      suite("GoogleCloudService — Analytics & Cloud Functions");
+
+      test("trackEvent() records GA4 events without error", () => {
+        GoogleCloudService.trackEvent("test_event", { category: "test" });
+        GoogleCloudService.trackEvent("view_change", {
+          view_name: "dashboard",
+        });
+        assert(true, "Events tracked without error");
+      });
+
+      test("submitToCloudFunction() handles missing data gracefully", async () => {
+        const result = await GoogleCloudService.submitToCloudFunction({});
+        // Should not throw — returns null on failure/rate-limit
+        assert(
+          result === null || typeof result === "object",
+          "Should handle gracefully",
+        );
+      });
+
+      test("flushAnalytics() runs without error", () => {
+        GoogleCloudService.trackEvent("flush_test", {});
+        GoogleCloudService.flushAnalytics();
+        assert(true, "Analytics flushed without error");
+      });
+
+      suite("GoogleCloudService — BigQuery & Vertex AI");
+
+      test("queryBigQueryAnalytics() returns historical data with fallback", async () => {
+        const data = await GoogleCloudService.queryBigQueryAnalytics(
+          "stadium-alpha",
+          3,
+        );
+        assert(data !== null, "Should return data");
+        assertType(data.totalRows, "number");
+        assert(data.rows.length > 0, "Should have historical rows");
+        assertEqual(data.source, "local-estimate");
+      });
+
+      test("predictWithVertexAI() returns prediction with local fallback", async () => {
+        const pred = await GoogleCloudService.predictWithVertexAI(
+          "food-nw",
+          10,
+          CrowdEngine.getSnapshot(),
+        );
+        assertType(pred.predicted, "number");
+        assertType(pred.confidence, "number");
+        assertType(pred.source, "string");
+        assert(
+          pred.predicted >= 0 && pred.predicted <= 1,
+          "Prediction in range",
+        );
+      });
+
+      test("predictWithVertexAI() handles unknown zone gracefully", async () => {
+        const pred = await GoogleCloudService.predictWithVertexAI(
+          "unknown-zone",
+          5,
+        );
+        assertType(pred.predicted, "number");
+        assert(
+          pred.source === "local-engine" || pred.source === "default",
+          "Should use fallback",
+        );
+      });
+
+      test("dispose() cleans up resources without error", () => {
+        // Should not throw
+        GoogleCloudService.dispose();
+        assert(true, "Disposed without error");
+        // Re-init for subsequent tests
+        GoogleCloudService.init();
+      });
+
+      // ===== EDGE CASE TESTS =====
+      suite("Edge Cases — Boundary & Error Conditions");
+
+      test("sanitize() handles null/undefined input", () => {
+        assertType(ArenaUtils.sanitize(null), "string");
+        assertType(ArenaUtils.sanitize(undefined), "string");
+      });
+
+      test("sanitize() handles numeric input", () => {
+        assertEqual(ArenaUtils.sanitize(42), "42");
+        assertEqual(ArenaUtils.sanitize(0), "0");
+      });
+
+      test("clamp() handles equal min and max", () => {
+        assertEqual(ArenaUtils.clamp(5, 3, 3), 3);
+      });
+
+      test("lerp() clamps t outside 0-1 range", () => {
+        assertEqual(ArenaUtils.lerp(0, 10, -1), 0);
+        assertEqual(ArenaUtils.lerp(0, 10, 2), 10);
+      });
+
+      test("CrowdEngine handles unknown zone type gracefully", () => {
+        assertEqual(CrowdEngine.findLeastCrowded("nonexistent"), null);
+      });
+
+      test("CrowdEngine.getWaitTime() returns 0 for unknown type", () => {
+        assertEqual(CrowdEngine.getWaitTime("nonexistent"), 0);
+      });
+
+      test("CrowdEngine.predict() handles unknown zone ID", () => {
+        const pred = CrowdEngine.predict("nonexistent-zone", 10);
+        assertEqual(pred.predicted, 0.5);
+        assertEqual(pred.confidence, 0);
+      });
+
+      test("CrowdEngine.setPhase() rejects invalid phase", () => {
+        CrowdEngine.setPhase("invalid-phase");
+        assert(
+          CrowdEngine.getSnapshot().phase !== "invalid-phase",
+          "Should not set invalid phase",
+        );
+        CrowdEngine.setPhase("pre-game");
+      });
+
+      test("FlowOptimizer handles null profile gracefully", () => {
+        const flow = FlowOptimizer.generateFlow(
+          null,
+          CrowdEngine.getSnapshot(),
+        );
+        assert(flow.items.length > 0, "Should still generate flow items");
+      });
+
+      test("FlowOptimizer.findMeetingPoint() handles empty sections", () => {
+        const result = FlowOptimizer.findMeetingPoint(
+          [],
+          CrowdEngine.getSnapshot(),
+        );
+        assert(result.zone !== undefined, "Should return a zone");
+      });
+
+      test("FirebaseService.joinGroup() handles non-existent code", () => {
+        const group = FirebaseService.joinGroup("ARENA-ZZZZ", {
+          name: "Test",
+          section: "north-lower",
+        });
+        assert(group !== null, "Should create fallback group");
+      });
+
+      test("FirebaseService.getGroup() returns null for unknown code", () => {
+        const group = FirebaseService.getGroup("NONEXISTENT");
+        assertEqual(group, null);
+      });
+
+      test("GeminiService.chat() handles empty context object", async () => {
+        const response = await GeminiService.chat("Hello", {});
+        assertType(response, "string");
+        assert(response.length > 0, "Should return non-empty response");
+      });
+
+      // ===== PERFORMANCE & EFFICIENCY TESTS =====
+      suite("Performance — Efficiency & Resource Optimization");
+
+      test("CrowdEngine: 100 snapshots in < 500ms", () => {
+        const start = performance.now();
+        for (let i = 0; i < 100; i++) CrowdEngine.getSnapshot();
+        const elapsed = performance.now() - start;
+        assert(elapsed < 500, `Took ${elapsed.toFixed(1)}ms`);
+      });
+
+      test("FlowOptimizer: flow generation in < 100ms", () => {
+        const start = performance.now();
+        FlowOptimizer.generateFlow(
+          { section: "north-lower" },
+          CrowdEngine.getSnapshot(),
+        );
+        assert(performance.now() - start < 100, "Should complete quickly");
+      });
+
+      test("sanitize(): 1000 XSS payloads in < 50ms", () => {
+        const input = "<script>".repeat(1000);
+        const start = performance.now();
+        ArenaUtils.sanitize(input);
+        assert(
+          performance.now() - start < 50,
+          "Should handle large inputs efficiently",
+        );
+      });
+
+      test("CrowdEngine.generatePredictions() in < 50ms", () => {
+        const start = performance.now();
+        CrowdEngine.generatePredictions();
+        assert(performance.now() - start < 50, "Predictions should be fast");
+      });
+
+      test("GoogleCloudService.healthCheck() in < 20ms", () => {
+        const start = performance.now();
+        GoogleCloudService.healthCheck();
+        assert(performance.now() - start < 20, "Health check should be fast");
+      });
+
+      // ===== REGRESSION TESTS =====
+      suite("Regression — Stability Validation");
+
+      test("CrowdEngine zones maintain valid density after multiple ticks", () => {
+        CrowdEngine.setPhase("halftime");
+        for (let i = 0; i < 10; i++) {
+          const snap = CrowdEngine.getSnapshot();
+          snap.zones.forEach((z) => {
+            assert(
+              z.density >= 0 && z.density <= 1,
+              `${z.name} density ${z.density} invalid after tick ${i}`,
+            );
+          });
+        }
+        CrowdEngine.setPhase("pre-game");
+      });
+
+      test("FlowOptimizer produces consistent structure across profiles", () => {
+        const profiles = [
+          { section: "north-lower", accessibility: "none" },
+          { section: "south-upper", accessibility: "wheelchair" },
+          { section: "vip", accessibility: "elderly" },
+        ];
+        profiles.forEach((p) => {
+          const flow = FlowOptimizer.generateFlow(p, CrowdEngine.getSnapshot());
+          assert(Array.isArray(flow.items), "Items should be array");
+          assertType(flow.totalTimeSaved, "number");
+          assertType(flow.flowScore, "number");
+          assert(
+            flow.flowScore >= 0 && flow.flowScore <= 100,
+            "Score in range",
+          );
+        });
+      });
+
+      test("Multiple group create/join cycles work correctly", () => {
+        const code1 = FirebaseService.createGroup("G1", {
+          name: "A",
+          section: "north-lower",
+        });
+        const code2 = FirebaseService.createGroup("G2", {
+          name: "B",
+          section: "south-lower",
+        });
+        FirebaseService.joinGroup(code1, { name: "C", section: "east-lower" });
+        const g1 = FirebaseService.getGroup(code1);
+        const g2 = FirebaseService.getGroup(code2);
+        assertEqual(g1.members.length, 2);
+        assertEqual(g2.members.length, 1);
+      });
+
+      // ===== MAPS SERVICE TESTS =====
+      suite("MapsService — Stadium Visualization");
+
+      test("MapsService module is defined", () => {
+        assertType(MapsService, "object");
+        assertType(MapsService.init, "function");
+        assertType(MapsService.setLayer, "function");
+        assertType(MapsService.stop, "function");
+      });
+
+      test("init() handles missing canvas ID gracefully", () => {
+        MapsService.init("nonexistent-canvas-id");
+        assert(true, "Should not throw for missing canvas");
+      });
+
+      test("setLayer() accepts all valid layer types", () => {
+        const layers = ["crowd", "food", "facilities", "exits"];
+        layers.forEach((layer) => {
+          MapsService.setLayer(layer);
+          assert(true, `Should accept layer: ${layer}`);
+        });
+      });
+
+      test("stop() runs without error when no animation is active", () => {
+        MapsService.stop();
+        assert(true, "Should stop without error");
+      });
+
+      test("init() with valid canvas element starts rendering", () => {
+        const canvas = document.createElement("canvas");
+        canvas.id = "test-map-canvas";
+        canvas.width = 400;
+        canvas.height = 240;
+        document.body.appendChild(canvas);
+        MapsService.init("test-map-canvas");
+        MapsService.stop();
+        canvas.remove();
+        assert(true, "Should init and stop cleanly");
+      });
+
+      // ===== ACCESSIBILITY SERVICE TESTS =====
+      suite("AccessibilityService — WCAG 2.1 AA Compliance");
+
+      test("AccessibilityService module is defined with full API", () => {
+        assertType(AccessibilityService, "object");
+        assertType(AccessibilityService.init, "function");
+        assertType(AccessibilityService.applyFontScale, "function");
+        assertType(AccessibilityService.increaseFontSize, "function");
+        assertType(AccessibilityService.toggleHighContrast, "function");
+        assertType(AccessibilityService.toggleReduceMotion, "function");
+        assertType(AccessibilityService.announce, "function");
+        assertType(AccessibilityService.setTheme, "function");
+      });
+
+      test("applyFontScale() clamps values within valid range", () => {
+        AccessibilityService.applyFontScale(0.5);
+        const scale1 = getComputedStyle(document.documentElement)
+          .getPropertyValue("--font-scale")
+          .trim();
+        assert(parseFloat(scale1) >= 0.8, "Should clamp to minimum 0.8");
+
+        AccessibilityService.applyFontScale(2.0);
+        const scale2 = getComputedStyle(document.documentElement)
+          .getPropertyValue("--font-scale")
+          .trim();
+        assert(parseFloat(scale2) <= 1.5, "Should clamp to maximum 1.5");
+
+        AccessibilityService.applyFontScale(1.0);
+      });
+
+      test("toggleHighContrast() applies data-theme attribute", () => {
+        AccessibilityService.toggleHighContrast(true);
+        assertEqual(
+          document.documentElement.getAttribute("data-theme"),
+          "high-contrast",
+        );
+        AccessibilityService.toggleHighContrast(false);
+        assertEqual(
+          document.documentElement.getAttribute("data-theme"),
+          "dark",
+        );
+      });
+
+      test("toggleReduceMotion() toggles CSS class", () => {
+        AccessibilityService.toggleReduceMotion(true);
+        assert(
+          document.documentElement.classList.contains("reduce-motion"),
+          "Should add reduce-motion class",
+        );
+        AccessibilityService.toggleReduceMotion(false);
+        assert(
+          !document.documentElement.classList.contains("reduce-motion"),
+          "Should remove reduce-motion class",
+        );
+      });
+
+      test("setTheme() switches between dark and light", () => {
+        AccessibilityService.setTheme("light");
+        assertEqual(
+          document.documentElement.getAttribute("data-theme"),
+          "light",
+        );
+        AccessibilityService.setTheme("dark");
+        assertEqual(
+          document.documentElement.getAttribute("data-theme"),
+          "dark",
+        );
+      });
+
+      test("announce() creates and removes sr-only element", () => {
+        const before = document.querySelectorAll(".sr-only").length;
+        AccessibilityService.announce("Test announcement");
+        const after = document.querySelectorAll(".sr-only").length;
+        assert(after > before, "Should add sr-only element");
+      });
+
+      test("increaseFontSize() changes scale value", () => {
+        AccessibilityService.applyFontScale(1.0);
+        AccessibilityService.increaseFontSize(0.1);
+        const scale = getComputedStyle(document.documentElement)
+          .getPropertyValue("--font-scale")
+          .trim();
+        assert(parseFloat(scale) >= 1.0, "Should increase font scale");
+        AccessibilityService.applyFontScale(1.0);
+      });
+
+      // ===== ASYNC ERROR HANDLING TESTS =====
+      suite("Async Error Handling — Graceful Degradation");
+
+      test("GeminiService.chat() handles concurrent calls", async () => {
+        const p1 = GeminiService.chat("Where is food?", {});
+        const p2 = GeminiService.chat("Exit info?", {});
+        const [r1, r2] = await Promise.all([p1, p2]);
+        assertType(r1, "string");
+        assertType(r2, "string");
+      });
+
+      test("GeminiService.translate() handles invalid language code", async () => {
+        const result = await GeminiService.translate("Hello", "xx-invalid");
+        assertEqual(
+          result,
+          "Hello",
+          "Should return original text for unknown language",
+        );
+      });
+
+      test("GoogleCloudService.submitToCloudFunction() handles rapid calls", async () => {
+        const r1 = await GoogleCloudService.submitToCloudFunction(
+          CrowdEngine.getSnapshot(),
+        );
+        const r2 = await GoogleCloudService.submitToCloudFunction(
+          CrowdEngine.getSnapshot(),
+        );
+        // Second call should be rate-limited
+        assert(
+          r2 === null || typeof r2 === "object",
+          "Should handle rate limiting",
+        );
+      });
+
+      test("GoogleCloudService.predictWithVertexAI() handles concurrent predictions", async () => {
+        const promises = ["food-nw", "gate-a", "restroom-n"].map((zone) =>
+          GoogleCloudService.predictWithVertexAI(
+            zone,
+            5,
+            CrowdEngine.getSnapshot(),
+          ),
+        );
+        const results = await Promise.all(promises);
+        results.forEach((r) => {
+          assertType(r.predicted, "number");
+          assertType(r.confidence, "number");
+        });
+      });
+
+      // ===== DOM / INTEGRATION TESTS =====
+      suite("DOM Integration — Component Structure");
+
+      test("ArenaUtils.$() returns null for missing selectors", () => {
+        assertEqual(ArenaUtils.$("#nonexistent-element-xyz"), null);
+      });
+
+      test("ArenaUtils.$$() returns empty NodeList for missing selectors", () => {
+        const result = ArenaUtils.$$(".nonexistent-class-xyz");
+        assertEqual(result.length, 0);
+      });
+
+      test("validateForm() returns false for empty required field", () => {
+        const form = document.createElement("form");
+        const input = document.createElement("input");
+        input.required = true;
+        input.value = "";
+        form.appendChild(input);
+        assertEqual(ArenaUtils.validateForm(form), false);
+      });
+
+      test("validateForm() returns true for filled required field", () => {
+        const form = document.createElement("form");
+        const input = document.createElement("input");
+        input.required = true;
+        input.value = "test";
+        form.appendChild(input);
+        assertEqual(ArenaUtils.validateForm(form), true);
+      });
+
+      test("showToast() creates toast element with correct role", () => {
+        const container = document.createElement("div");
+        container.id = "toast-container";
+        document.body.appendChild(container);
+        ArenaUtils.showToast("Test toast", "success");
+        const toasts = container.querySelectorAll(".toast");
+        assert(toasts.length > 0, "Should create toast element");
+        const toast = toasts[toasts.length - 1];
+        assertEqual(toast.getAttribute("role"), "status");
+        container.remove();
+      });
+
+      test("CrowdEngine.start() and stop() cycle works correctly", () => {
+        CrowdEngine.start(5000);
+        CrowdEngine.stop();
+        assert(true, "Start/stop cycle should complete without error");
+      });
+
+      test("FlowOptimizer ACTIVITY_CATALOG has valid entries", () => {
+        assert(
+          Array.isArray(FlowOptimizer.ACTIVITY_CATALOG),
+          "Should be an array",
+        );
+        assert(
+          FlowOptimizer.ACTIVITY_CATALOG.length > 0,
+          "Should have activities",
+        );
+        FlowOptimizer.ACTIVITY_CATALOG.forEach((a) => {
+          assertType(a.id, "string");
+          assertType(a.label, "string");
+          assertType(a.baseDuration, "number");
+          assert(a.baseDuration > 0, "Duration should be positive");
+        });
+      });
+
+      // Show results
+      showSummary();
     </script>
-</body>
+  </body>
 </html>
-

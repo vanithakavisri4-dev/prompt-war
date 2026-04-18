@@ -64,32 +64,36 @@ Most solutions show **current** crowd status. ArenaFlow AI is different — it a
 
 ### Core Modules
 
-| Module | Purpose | Key Algorithm |
-|--------|---------|---------------|
-| `CrowdEngine` | Real-time crowd simulation & prediction | Phase-based density modeling with noise |
-| `FlowOptimizer` | Personalized activity scheduling | Greedy assignment with crowd-aware scoring |
-| `GeminiService` | AI concierge (natural language) | Gemini 2.0 Flash API + smart local fallback |
-| `MapsService` | Interactive stadium visualization | Canvas-based heatmap with layer system |
-| `FirebaseService` | Real-time data sync & groups | Realtime DB + anonymous auth |
-| `AccessibilityService` | WCAG 2.1 AA compliance | Theme engine, font scaling, keyboard nav |
-| `GoogleCloudService` | Cloud platform integration | Cloud Logging, Monitoring, Analytics |
-| `ArenaUtils` | Core utility library | Sanitization, crypto randomness, helpers |
+| Module                 | Purpose                                 | Key Algorithm                               |
+| ---------------------- | --------------------------------------- | ------------------------------------------- |
+| `CrowdEngine`          | Real-time crowd simulation & prediction | Phase-based density modeling with noise     |
+| `FlowOptimizer`        | Personalized activity scheduling        | Greedy assignment with crowd-aware scoring  |
+| `GeminiService`        | AI concierge (natural language)         | Gemini 2.0 Flash API + smart local fallback |
+| `MapsService`          | Interactive stadium visualization       | Canvas-based heatmap with layer system      |
+| `FirebaseService`      | Real-time data sync & groups            | Realtime DB + anonymous auth                |
+| `AccessibilityService` | WCAG 2.1 AA compliance                  | Theme engine, font scaling, keyboard nav    |
+| `GoogleCloudService`   | Cloud platform integration              | Cloud Logging, Monitoring, Analytics        |
+| `ArenaUtils`           | Core utility library                    | Sanitization, crypto randomness, helpers    |
 
 ---
 
 ## 🔧 How It Works
 
 ### 1. Onboarding
+
 User enters name, selects venue, seat section, accessibility needs, and language. Data is stored securely in localStorage with sanitized inputs.
 
 ### 2. Real-Time Dashboard
+
 - **4 live stat cards**: Crowd density, avg wait time, flow score, safety index
 - **Stadium heatmap**: Canvas-rendered with real-time zone density overlays
 - **AI predictions**: 5/10/15/20/30-minute congestion forecasts
 - **Quick actions**: One-tap access to nearest food, restrooms, exits, medical
 
 ### 3. Personalized Experience Flow (The Differentiator)
+
 The Flow Optimizer creates a time-optimized activity schedule:
+
 - Selects activities based on user profile (mandatory + optional)
 - Scores every activity-slot combination by predicted crowd density
 - Uses greedy assignment to minimize total wait across all activities
@@ -98,7 +102,9 @@ The Flow Optimizer creates a time-optimized activity schedule:
 - Recalculates in real-time as conditions change
 
 ### 4. AI Concierge (Google Gemini 2.0 Flash)
+
 Natural language assistant powered by Gemini 2.0 Flash:
+
 - Receives full crowd context with every query
 - Provides contextual, real-time venue guidance
 - Smart local fallback with pattern-matching when API is unavailable
@@ -106,21 +112,27 @@ Natural language assistant powered by Gemini 2.0 Flash:
 - Safety settings block harmful content categories
 
 ### 5. Interactive Live Map
+
 Canvas-based stadium visualization with:
+
 - Crowd density heatmap layer (color-coded radial gradients)
 - POI layers (food, facilities, exits) with density indicators
 - Animated user position marker with pulse effect
 - Responsive rendering with device pixel ratio support
 
 ### 6. Social Sync
+
 Group coordination feature:
+
 - Create/join groups with shareable codes (ARENA-XXXX)
 - See all group members and their sections
 - AI-powered optimal meeting point finder (centroid + density weighted)
 - Firebase real-time sync when configured
 
 ### 7. Emergency Mode
+
 One-tap emergency evacuation overlay:
+
 - Identifies nearest exit with lowest crowd density
 - Provides personalized evacuation route
 - Full-screen alert with accessibility announcements
@@ -130,20 +142,20 @@ One-tap emergency evacuation overlay:
 
 ## 🔗 Google Services Integration
 
-| Service | Usage | Integration Point |
-|---------|-------|-------------------|
-| **Google Gemini 2.0 Flash AI** | Conversational AI concierge with venue context, safety settings | `js/gemini.js` — Full API with system prompt, safety filters |
-| **Google Cloud Run** | Containerized deployment, auto-scaling, HTTPS | `Dockerfile` — NGINX Alpine container |
-| **Google Cloud Functions** | Serverless crowd analytics aggregation pipeline | `js/google-cloud.js` — submitToCloudFunction() with rate limiting |
-| **Google BigQuery** | Historical crowd data warehousing and trend analysis | `js/google-cloud.js` — queryBigQueryAnalytics() with SQL queries |
-| **Google Vertex AI** | ML-powered crowd density prediction model | `js/google-cloud.js` — predictWithVertexAI() with local fallback |
-| **Google Cloud Logging** | Structured JSON logging with severity levels | `js/google-cloud.js` — Cloud Logging compatible format |
-| **Google Cloud Monitoring** | Health checks, Web Vitals, performance metrics | `js/google-cloud.js` — healthCheck(), getPerformanceMetrics() |
-| **Google Analytics 4** | User interaction tracking, event analytics | `index.html` + `js/google-cloud.js` — trackEvent() |
-| **Firebase Realtime Database** | Real-time crowd data sync & group management | `js/firebase-config.js` — Live sync with anonymous auth |
-| **Firebase Authentication** | Secure anonymous user sessions | `js/firebase-config.js` — signInAnonymously() |
-| **Google Cloud Translation** | Multi-language support (6 languages) | `js/gemini.js` — translate() function |
-| **Google Fonts** | Typography (Inter, JetBrains Mono) | `index.html` — Premium font loading with preconnect |
+| Service                        | Usage                                                           | Integration Point                                                 |
+| ------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Google Gemini 2.0 Flash AI** | Conversational AI concierge with venue context, safety settings | `js/gemini.js` — Full API with system prompt, safety filters      |
+| **Google Cloud Run**           | Containerized deployment, auto-scaling, HTTPS                   | `Dockerfile` — NGINX Alpine container                             |
+| **Google Cloud Functions**     | Serverless crowd analytics aggregation pipeline                 | `js/google-cloud.js` — submitToCloudFunction() with rate limiting |
+| **Google BigQuery**            | Historical crowd data warehousing and trend analysis            | `js/google-cloud.js` — queryBigQueryAnalytics() with SQL queries  |
+| **Google Vertex AI**           | ML-powered crowd density prediction model                       | `js/google-cloud.js` — predictWithVertexAI() with local fallback  |
+| **Google Cloud Logging**       | Structured JSON logging with severity levels                    | `js/google-cloud.js` — Cloud Logging compatible format            |
+| **Google Cloud Monitoring**    | Health checks, Web Vitals, performance metrics                  | `js/google-cloud.js` — healthCheck(), getPerformanceMetrics()     |
+| **Google Analytics 4**         | User interaction tracking, event analytics                      | `index.html` + `js/google-cloud.js` — trackEvent()                |
+| **Firebase Realtime Database** | Real-time crowd data sync & group management                    | `js/firebase-config.js` — Live sync with anonymous auth           |
+| **Firebase Authentication**    | Secure anonymous user sessions                                  | `js/firebase-config.js` — signInAnonymously()                     |
+| **Google Cloud Translation**   | Multi-language support (6 languages)                            | `js/gemini.js` — translate() function                             |
+| **Google Fonts**               | Typography (Inter, JetBrains Mono)                              | `index.html` — Premium font loading with preconnect               |
 
 ---
 
@@ -186,6 +198,7 @@ One-tap emergency evacuation overlay:
 Open `tests/test.html` in a browser to run the full test suite (92 tests across 14 suites).
 
 **Test Coverage:**
+
 - ✅ **Utilities** — Sanitization (XSS, special chars, empty, null, numeric), clamp, lerp, randomId, storage, debounce, formatTime
 - ✅ **Crowd Engine** — Snapshot validity, density ranges, predictions, wait times, phase management, safety index, least crowded lookup
 - ✅ **Flow Optimizer** — Flow generation, item structure, scoring, accessibility adjustments, meeting points, null profile handling
@@ -238,9 +251,11 @@ prompt-war/
 ## 🚀 Deployment
 
 ### Live URL
+
 **[https://prompt-war-912679656092.us-central1.run.app](https://prompt-war-912679656092.us-central1.run.app)**
 
 ### Google Cloud Run Deployment
+
 The application is containerized using Docker and deployed on Google Cloud Run:
 
 ```bash
@@ -253,6 +268,7 @@ gcloud run deploy prompt-war \
 ```
 
 ### Local Development
+
 ```bash
 # Clone the repository
 git clone https://github.com/krishnan9841226883-design/prompt-war.git
@@ -269,17 +285,19 @@ docker run -p 8080:80 arenaflow-ai
 ### Optional: Enable Google Services
 
 To enable full Gemini AI responses, add your API key:
+
 ```javascript
-GeminiService.configure('YOUR_GEMINI_API_KEY');
+GeminiService.configure("YOUR_GEMINI_API_KEY");
 ```
 
 For Firebase real-time sync:
+
 ```javascript
 FirebaseService.init({
-  apiKey: 'YOUR_KEY',
-  authDomain: 'your-project.firebaseapp.com',
-  databaseURL: 'https://your-project.firebaseio.com',
-  projectId: 'your-project'
+  apiKey: "YOUR_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  databaseURL: "https://your-project.firebaseio.com",
+  projectId: "your-project",
 });
 ```
 
@@ -300,17 +318,17 @@ FirebaseService.init({
 
 ## 🏆 Why ArenaFlow AI Stands Out
 
-| Feature | Traditional Apps | ArenaFlow AI |
-|---------|-----------------|--------------|
-| Crowd Info | Shows current status | **Predicts** future congestion (5-30 min) |
-| Recommendations | Static suggestions | **Personalized, time-optimized** flows |
-| Coordination | Individual routing | **Cross-attendee orchestration** |
-| Accessibility | Basic compliance | **Full WCAG 2.1 AA** with 3 themes |
-| AI | Keyword search | **Gemini 2.0 Flash** natural language |
-| Updates | Manual refresh | **Real-time** 2-second intervals |
-| Deployment | Static hosting | **Google Cloud Run** with auto-scaling |
-| Monitoring | None | **Cloud Logging + Monitoring + GA4** |
-| Security | Basic | **Crypto, XSS prevention, safety filters** |
+| Feature         | Traditional Apps     | ArenaFlow AI                               |
+| --------------- | -------------------- | ------------------------------------------ |
+| Crowd Info      | Shows current status | **Predicts** future congestion (5-30 min)  |
+| Recommendations | Static suggestions   | **Personalized, time-optimized** flows     |
+| Coordination    | Individual routing   | **Cross-attendee orchestration**           |
+| Accessibility   | Basic compliance     | **Full WCAG 2.1 AA** with 3 themes         |
+| AI              | Keyword search       | **Gemini 2.0 Flash** natural language      |
+| Updates         | Manual refresh       | **Real-time** 2-second intervals           |
+| Deployment      | Static hosting       | **Google Cloud Run** with auto-scaling     |
+| Monitoring      | None                 | **Cloud Logging + Monitoring + GA4**       |
+| Security        | Basic                | **Crypto, XSS prevention, safety filters** |
 
 ---
 

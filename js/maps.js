@@ -13,9 +13,9 @@
  * @version 2.0.0
  * @author ArenaFlow AI Team
  */
-'use strict';
-
+// eslint-disable-next-line no-unused-vars
 const MapsService = (() => {
+  "use strict";
   /* ── Constants ─────────────────────────────────────────────── */
 
   /** Minimum canvas dimension (px) to avoid rendering on hidden views. */
@@ -59,21 +59,32 @@ const MapsService = (() => {
 
   /** Stadium outer wall polygon vertices (normalized 0-1 coordinates). */
   const OUTER_WALL = Object.freeze([
-    { x: 0.50, y: 0.02 }, { x: 0.78, y: 0.08 },
-    { x: 0.95, y: 0.25 }, { x: 0.98, y: 0.50 },
-    { x: 0.95, y: 0.75 }, { x: 0.78, y: 0.92 },
-    { x: 0.50, y: 0.98 }, { x: 0.22, y: 0.92 },
-    { x: 0.05, y: 0.75 }, { x: 0.02, y: 0.50 },
-    { x: 0.05, y: 0.25 }, { x: 0.22, y: 0.08 },
+    { x: 0.5, y: 0.02 },
+    { x: 0.78, y: 0.08 },
+    { x: 0.95, y: 0.25 },
+    { x: 0.98, y: 0.5 },
+    { x: 0.95, y: 0.75 },
+    { x: 0.78, y: 0.92 },
+    { x: 0.5, y: 0.98 },
+    { x: 0.22, y: 0.92 },
+    { x: 0.05, y: 0.75 },
+    { x: 0.02, y: 0.5 },
+    { x: 0.05, y: 0.25 },
+    { x: 0.22, y: 0.08 },
   ]);
 
   /** Stadium inner wall polygon vertices (normalized 0-1 coordinates). */
   const INNER_WALL = Object.freeze([
-    { x: 0.50, y: 0.25 }, { x: 0.70, y: 0.30 },
-    { x: 0.78, y: 0.42 }, { x: 0.78, y: 0.58 },
-    { x: 0.70, y: 0.70 }, { x: 0.50, y: 0.75 },
-    { x: 0.30, y: 0.70 }, { x: 0.22, y: 0.58 },
-    { x: 0.22, y: 0.42 }, { x: 0.30, y: 0.30 },
+    { x: 0.5, y: 0.25 },
+    { x: 0.7, y: 0.3 },
+    { x: 0.78, y: 0.42 },
+    { x: 0.78, y: 0.58 },
+    { x: 0.7, y: 0.7 },
+    { x: 0.5, y: 0.75 },
+    { x: 0.3, y: 0.7 },
+    { x: 0.22, y: 0.58 },
+    { x: 0.22, y: 0.42 },
+    { x: 0.3, y: 0.3 },
   ]);
 
   /** Density thresholds for color-coding. */
@@ -91,23 +102,23 @@ const MapsService = (() => {
   /** Layer type mapping from button IDs to zone types. */
   const LAYER_TYPE_MAP = Object.freeze({
     crowd: null,
-    food: 'food',
-    facilities: 'restroom',
-    exits: 'gate',
+    food: "food",
+    facilities: "restroom",
+    exits: "gate",
   });
 
   /** Emoji icons for POI layer markers. */
   const LAYER_EMOJI_MAP = Object.freeze({
-    food: '🍔',
-    facilities: '🚻',
-    exits: '🚪',
+    food: "🍔",
+    facilities: "🚻",
+    exits: "🚪",
   });
 
   /** Playing field position ratios. */
   const FIELD_X_RATIO = 0.35;
   const FIELD_Y_RATIO = 0.35;
-  const FIELD_W_RATIO = 0.30;
-  const FIELD_H_RATIO = 0.30;
+  const FIELD_W_RATIO = 0.3;
+  const FIELD_H_RATIO = 0.3;
   const FIELD_CENTER_CIRCLE_RATIO = 0.15;
 
   /** Canvas aspect ratio (height = width * this value). */
@@ -128,7 +139,7 @@ const MapsService = (() => {
   let _ctx = null;
 
   /** @type {string} Currently active visualization layer. */
-  let _activeLayer = 'crowd';
+  let _activeLayer = "crowd";
 
   /** @type {number|null} Animation frame request ID. */
   let _animFrame = null;
@@ -143,19 +154,19 @@ const MapsService = (() => {
     try {
       _canvas = document.getElementById(canvasId);
       if (!_canvas) {
-        console.warn('[MapsService] Canvas element not found:', canvasId);
+        console.warn("[MapsService] Canvas element not found:", canvasId);
         return;
       }
-      _ctx = _canvas.getContext('2d');
+      _ctx = _canvas.getContext("2d");
       if (!_ctx) {
-        console.error('[MapsService] Failed to acquire 2D context');
+        console.error("[MapsService] Failed to acquire 2D context");
         return;
       }
       resize();
-      window.addEventListener('resize', ArenaUtils.debounce(resize, 200));
+      window.addEventListener("resize", ArenaUtils.debounce(resize, 200));
       startRenderLoop();
     } catch (error) {
-      console.error('[MapsService] Initialization failed:', error);
+      console.error("[MapsService] Initialization failed:", error);
     }
   }
 
@@ -170,14 +181,15 @@ const MapsService = (() => {
 
     const parent = _canvas.parentElement;
     const dpr = devicePixelRatio || 1;
-    const parentWidth = parent.clientWidth > MIN_PARENT_WIDTH
-      ? parent.clientWidth
-      : FALLBACK_WIDTH;
+    const parentWidth =
+      parent.clientWidth > MIN_PARENT_WIDTH
+        ? parent.clientWidth
+        : FALLBACK_WIDTH;
 
     _canvas.width = parentWidth * dpr;
     _canvas.height = parentWidth * CANVAS_ASPECT_RATIO * dpr;
-    _canvas.style.width = parentWidth + 'px';
-    _canvas.style.height = parentWidth * CANVAS_ASPECT_RATIO + 'px';
+    _canvas.style.width = parentWidth + "px";
+    _canvas.style.height = parentWidth * CANVAS_ASPECT_RATIO + "px";
 
     _ctx.setTransform(1, 0, 0, 1, 0, 0);
     _ctx.scale(dpr, dpr);
@@ -234,7 +246,7 @@ const MapsService = (() => {
 
     // Clear and fill background
     _ctx.clearRect(0, 0, w, h);
-    _ctx.fillStyle = '#0d1117';
+    _ctx.fillStyle = "#0d1117";
     _ctx.fillRect(0, 0, w, h);
 
     drawGrid(w, h);
@@ -257,7 +269,7 @@ const MapsService = (() => {
    * @param {number} h - Canvas height
    */
   function drawGrid(w, h) {
-    _ctx.strokeStyle = 'rgba(108,99,255,0.05)';
+    _ctx.strokeStyle = "rgba(108,99,255,0.05)";
     _ctx.lineWidth = 0.5;
 
     for (let x = 0; x < w; x += GRID_SPACING) {
@@ -290,10 +302,10 @@ const MapsService = (() => {
       }
     });
     _ctx.closePath();
-    _ctx.strokeStyle = 'rgba(108,99,255,0.4)';
+    _ctx.strokeStyle = "rgba(108,99,255,0.4)";
     _ctx.lineWidth = 2;
     _ctx.stroke();
-    _ctx.fillStyle = 'rgba(108,99,255,0.03)';
+    _ctx.fillStyle = "rgba(108,99,255,0.03)";
     _ctx.fill();
 
     // Inner wall
@@ -306,7 +318,7 @@ const MapsService = (() => {
       }
     });
     _ctx.closePath();
-    _ctx.strokeStyle = 'rgba(0,212,255,0.3)';
+    _ctx.strokeStyle = "rgba(0,212,255,0.3)";
     _ctx.lineWidth = 1.5;
     _ctx.stroke();
   }
@@ -323,9 +335,9 @@ const MapsService = (() => {
     const fh = FIELD_H_RATIO * h;
 
     // Field area
-    _ctx.fillStyle = 'rgba(16,185,129,0.12)';
+    _ctx.fillStyle = "rgba(16,185,129,0.12)";
     _ctx.fillRect(fx, fy, fw, fh);
-    _ctx.strokeStyle = 'rgba(16,185,129,0.4)';
+    _ctx.strokeStyle = "rgba(16,185,129,0.4)";
     _ctx.lineWidth = 1.5;
     _ctx.strokeRect(fx, fy, fw, fh);
 
@@ -337,15 +349,21 @@ const MapsService = (() => {
 
     // Center circle
     _ctx.beginPath();
-    _ctx.arc(fx + fw / 2, fy + fh / 2, Math.min(fw, fh) * FIELD_CENTER_CIRCLE_RATIO, 0, Math.PI * 2);
+    _ctx.arc(
+      fx + fw / 2,
+      fy + fh / 2,
+      Math.min(fw, fh) * FIELD_CENTER_CIRCLE_RATIO,
+      0,
+      Math.PI * 2,
+    );
     _ctx.stroke();
 
     // Field label
-    _ctx.fillStyle = 'rgba(16,185,129,0.5)';
+    _ctx.fillStyle = "rgba(16,185,129,0.5)";
     _ctx.font = `${Math.max(MIN_FIELD_FONT_SIZE, w * FIELD_FONT_SCALE)}px Inter, sans-serif`;
-    _ctx.textAlign = 'center';
-    _ctx.textBaseline = 'middle';
-    _ctx.fillText('PLAYING FIELD', fx + fw / 2, fy + fh / 2);
+    _ctx.textAlign = "center";
+    _ctx.textBaseline = "middle";
+    _ctx.fillText("PLAYING FIELD", fx + fw / 2, fy + fh / 2);
   }
 
   /**
@@ -358,14 +376,14 @@ const MapsService = (() => {
     const layerType = LAYER_TYPE_MAP[_activeLayer];
     const emoji = LAYER_EMOJI_MAP[_activeLayer];
     const zones = layerType
-      ? snapshot.zones.filter(z => z.type === layerType)
+      ? snapshot.zones.filter((z) => z.type === layerType)
       : snapshot.zones;
 
-    zones.forEach(zone => {
+    zones.forEach((zone) => {
       const x = zone.x * w;
       const y = zone.y * h;
 
-      if (_activeLayer === 'crowd') {
+      if (_activeLayer === "crowd") {
         drawCrowdBlob(x, y, zone.density);
       } else {
         drawPOIMarker(x, y, zone.density, emoji);
@@ -417,16 +435,18 @@ const MapsService = (() => {
     // Background circle
     _ctx.beginPath();
     _ctx.arc(x, y, POI_MARKER_RADIUS, 0, Math.PI * 2);
-    _ctx.fillStyle = isHighDensity ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)';
+    _ctx.fillStyle = isHighDensity
+      ? "rgba(239,68,68,0.3)"
+      : "rgba(16,185,129,0.3)";
     _ctx.fill();
-    _ctx.strokeStyle = isHighDensity ? '#ef4444' : '#10b981';
+    _ctx.strokeStyle = isHighDensity ? "#ef4444" : "#10b981";
     _ctx.lineWidth = 1.5;
     _ctx.stroke();
 
     // Emoji label
-    _ctx.font = '16px sans-serif';
-    _ctx.textAlign = 'center';
-    _ctx.textBaseline = 'middle';
+    _ctx.font = "16px sans-serif";
+    _ctx.textAlign = "center";
+    _ctx.textBaseline = "middle";
     _ctx.fillText(emoji, x, y);
   }
 
@@ -439,16 +459,16 @@ const MapsService = (() => {
   function drawZoneLabels(w, h, snapshot) {
     const fontSize = Math.max(MIN_LABEL_FONT_SIZE, w * LABEL_FONT_SCALE);
     _ctx.font = `${fontSize}px Inter, sans-serif`;
-    _ctx.textBaseline = 'top';
-    _ctx.textAlign = 'center';
-    _ctx.fillStyle = 'rgba(241,245,249,0.5)';
+    _ctx.textBaseline = "top";
+    _ctx.textAlign = "center";
+    _ctx.fillStyle = "rgba(241,245,249,0.5)";
 
     snapshot.zones
-      .filter(z => ['seating', 'concourse'].includes(z.type))
-      .forEach(zone => {
+      .filter((z) => ["seating", "concourse"].includes(z.type))
+      .forEach((zone) => {
         const label = zone.name
-          .replace(' Stand ', ' ')
-          .replace('Concourse', 'Conc.');
+          .replace(" Stand ", " ")
+          .replace("Concourse", "Conc.");
         _ctx.fillText(label, zone.x * w, zone.y * h + 20);
       });
   }
@@ -459,38 +479,40 @@ const MapsService = (() => {
    * @param {number} h - Canvas height
    */
   function drawUserMarker(w, h) {
-    const section = ArenaUtils.storage.get('section', 'north-lower');
-    const userZone = CrowdEngine.ZONES.find(z => z.id === section);
+    const section = ArenaUtils.storage.get("section", "north-lower");
+    const userZone = CrowdEngine.ZONES.find((z) => z.id === section);
     if (!userZone) return;
 
     const ux = userZone.x * w;
     const uy = userZone.y * h;
-    const pulseRadius = USER_DOT_RADIUS + USER_RING_OFFSET +
-      Math.sin(Date.now() / 1000 * USER_PULSE_SPEED) * USER_PULSE_AMPLITUDE;
+    const pulseRadius =
+      USER_DOT_RADIUS +
+      USER_RING_OFFSET +
+      Math.sin((Date.now() / 1000) * USER_PULSE_SPEED) * USER_PULSE_AMPLITUDE;
 
     // Pulsing outer ring
     _ctx.beginPath();
     _ctx.arc(ux, uy, pulseRadius, 0, Math.PI * 2);
-    _ctx.strokeStyle = 'rgba(108,99,255,0.3)';
+    _ctx.strokeStyle = "rgba(108,99,255,0.3)";
     _ctx.lineWidth = 2;
     _ctx.stroke();
 
     // Inner dot
     _ctx.beginPath();
     _ctx.arc(ux, uy, USER_DOT_RADIUS, 0, Math.PI * 2);
-    _ctx.fillStyle = '#6c63ff';
+    _ctx.fillStyle = "#6c63ff";
     _ctx.fill();
-    _ctx.strokeStyle = '#fff';
+    _ctx.strokeStyle = "#fff";
     _ctx.lineWidth = 2;
     _ctx.stroke();
 
     // "YOU" label
     const labelFontSize = Math.max(9, w * 0.014);
-    _ctx.fillStyle = '#fff';
+    _ctx.fillStyle = "#fff";
     _ctx.font = `bold ${labelFontSize}px Inter, sans-serif`;
-    _ctx.textAlign = 'center';
-    _ctx.textBaseline = 'bottom';
-    _ctx.fillText('📍 YOU', ux, uy - USER_RING_OFFSET - USER_PULSE_AMPLITUDE);
+    _ctx.textAlign = "center";
+    _ctx.textBaseline = "bottom";
+    _ctx.fillText("📍 YOU", ux, uy - USER_RING_OFFSET - USER_PULSE_AMPLITUDE);
   }
 
   /* ── Public API ────────────────────────────────────────────── */

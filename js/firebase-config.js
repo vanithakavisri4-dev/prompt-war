@@ -14,22 +14,22 @@
  * @version 2.0.0
  * @author ArenaFlow AI Team
  */
-'use strict';
-
+// eslint-disable-next-line no-unused-vars
 const FirebaseService = (() => {
+  "use strict";
   /* ── Constants ─────────────────────────────────────────────── */
 
   /** Prefix for generated group codes. */
-  const GROUP_CODE_PREFIX = 'ARENA-';
+  const GROUP_CODE_PREFIX = "ARENA-";
 
   /** Length of random characters in group codes. */
   const GROUP_CODE_RANDOM_LENGTH = 4;
 
   /** Firebase database path for latest crowd data. */
-  const DB_PATH_CROWD = 'crowd/latest';
+  const DB_PATH_CROWD = "crowd/latest";
 
   /** Firebase database path prefix for groups. */
-  const DB_PATH_GROUPS = 'groups';
+  const DB_PATH_GROUPS = "groups";
 
   /* ── State ─────────────────────────────────────────────────── */
 
@@ -59,8 +59,10 @@ const FirebaseService = (() => {
    * @param {string} config.projectId - Firebase project ID
    */
   function init(config) {
-    if (!config || !config.apiKey || typeof firebase === 'undefined') {
-      console.info('[FirebaseService] Not configured — using local simulation mode');
+    if (!config || !config.apiKey || typeof firebase === "undefined") {
+      console.info(
+        "[FirebaseService] Not configured — using local simulation mode",
+      );
       return;
     }
 
@@ -70,13 +72,13 @@ const FirebaseService = (() => {
       _auth = firebase.auth();
       _configured = true;
 
-      _auth.signInAnonymously().catch(error => {
-        console.warn('[FirebaseService] Anonymous auth failed:', error.message);
+      _auth.signInAnonymously().catch((error) => {
+        console.warn("[FirebaseService] Anonymous auth failed:", error.message);
       });
 
-      console.info('[FirebaseService] Initialized successfully');
+      console.info("[FirebaseService] Initialized successfully");
     } catch (error) {
-      console.warn('[FirebaseService] Init error:', error.message);
+      console.warn("[FirebaseService] Init error:", error.message);
     }
   }
 
@@ -108,7 +110,7 @@ const FirebaseService = (() => {
         updatedAt: firebase.database.ServerValue.TIMESTAMP,
       });
     } catch (error) {
-      console.warn('[FirebaseService] Push error:', error.message);
+      console.warn("[FirebaseService] Push error:", error.message);
     }
   }
 
@@ -121,7 +123,7 @@ const FirebaseService = (() => {
   function onCrowdUpdate(callback) {
     if (!_configured || !_db) return;
 
-    _db.ref(DB_PATH_CROWD).on('value', snap => {
+    _db.ref(DB_PATH_CROWD).on("value", (snap) => {
       const data = snap.val();
       if (data) {
         callback(data);
@@ -142,7 +144,8 @@ const FirebaseService = (() => {
    * @returns {string} Generated group code (e.g., 'ARENA-X7K2')
    */
   function createGroup(name, creator) {
-    const code = GROUP_CODE_PREFIX + ArenaUtils.randomId(GROUP_CODE_RANDOM_LENGTH);
+    const code =
+      GROUP_CODE_PREFIX + ArenaUtils.randomId(GROUP_CODE_RANDOM_LENGTH);
     const group = {
       name,
       code,
@@ -180,7 +183,7 @@ const FirebaseService = (() => {
     let group = _groups.get(code);
     if (!group) {
       group = {
-        name: 'Group',
+        name: "Group",
         code,
         members: [],
         createdAt: Date.now(),
@@ -212,7 +215,7 @@ const FirebaseService = (() => {
   function onGroupUpdate(code, callback) {
     if (!_configured || !_db) return;
 
-    _db.ref(`${DB_PATH_GROUPS}/${code}`).on('value', snap => {
+    _db.ref(`${DB_PATH_GROUPS}/${code}`).on("value", (snap) => {
       const data = snap.val();
       if (data) {
         _groups.set(code, data);

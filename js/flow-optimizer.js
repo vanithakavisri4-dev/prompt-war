@@ -6,22 +6,94 @@
  * @module FlowOptimizer
  */
 
-'use strict';
-
+// eslint-disable-next-line no-unused-vars
 const FlowOptimizer = (() => {
+  "use strict";
   /**
    * Activity templates with base durations and priorities.
    */
   const ACTIVITY_CATALOG = [
-    { id: 'arrive', label: 'Arrive & Find Seat', icon: '🎟️', baseDuration: 10, zoneType: 'gate', priority: 1, mandatory: true },
-    { id: 'food-1', label: 'Grab Food & Drinks', icon: '🍔', baseDuration: 8, zoneType: 'food', priority: 3, mandatory: false },
-    { id: 'restroom-1', label: 'Restroom Break', icon: '🚻', baseDuration: 5, zoneType: 'restroom', priority: 2, mandatory: false },
-    { id: 'merch', label: 'Visit Merchandise', icon: '🛍️', baseDuration: 12, zoneType: 'merch', priority: 5, mandatory: false },
-    { id: 'explore', label: 'Explore Fan Zone', icon: '🎪', baseDuration: 15, zoneType: 'concourse', priority: 4, mandatory: false },
-    { id: 'food-2', label: 'Halftime Snack', icon: '🌭', baseDuration: 7, zoneType: 'food', priority: 3, mandatory: false },
-    { id: 'restroom-2', label: 'Halftime Restroom', icon: '🚻', baseDuration: 5, zoneType: 'restroom', priority: 2, mandatory: false },
-    { id: 'seat-return', label: 'Return to Seat', icon: '💺', baseDuration: 5, zoneType: 'seating', priority: 1, mandatory: true },
-    { id: 'exit', label: 'Smart Exit', icon: '🚪', baseDuration: 8, zoneType: 'gate', priority: 1, mandatory: true },
+    {
+      id: "arrive",
+      label: "Arrive & Find Seat",
+      icon: "🎟️",
+      baseDuration: 10,
+      zoneType: "gate",
+      priority: 1,
+      mandatory: true,
+    },
+    {
+      id: "food-1",
+      label: "Grab Food & Drinks",
+      icon: "🍔",
+      baseDuration: 8,
+      zoneType: "food",
+      priority: 3,
+      mandatory: false,
+    },
+    {
+      id: "restroom-1",
+      label: "Restroom Break",
+      icon: "🚻",
+      baseDuration: 5,
+      zoneType: "restroom",
+      priority: 2,
+      mandatory: false,
+    },
+    {
+      id: "merch",
+      label: "Visit Merchandise",
+      icon: "🛍️",
+      baseDuration: 12,
+      zoneType: "merch",
+      priority: 5,
+      mandatory: false,
+    },
+    {
+      id: "explore",
+      label: "Explore Fan Zone",
+      icon: "🎪",
+      baseDuration: 15,
+      zoneType: "concourse",
+      priority: 4,
+      mandatory: false,
+    },
+    {
+      id: "food-2",
+      label: "Halftime Snack",
+      icon: "🌭",
+      baseDuration: 7,
+      zoneType: "food",
+      priority: 3,
+      mandatory: false,
+    },
+    {
+      id: "restroom-2",
+      label: "Halftime Restroom",
+      icon: "🚻",
+      baseDuration: 5,
+      zoneType: "restroom",
+      priority: 2,
+      mandatory: false,
+    },
+    {
+      id: "seat-return",
+      label: "Return to Seat",
+      icon: "💺",
+      baseDuration: 5,
+      zoneType: "seating",
+      priority: 1,
+      mandatory: true,
+    },
+    {
+      id: "exit",
+      label: "Smart Exit",
+      icon: "🚪",
+      baseDuration: 8,
+      zoneType: "gate",
+      priority: 1,
+      mandatory: true,
+    },
   ];
 
   /**
@@ -42,16 +114,23 @@ const FlowOptimizer = (() => {
 
     // Score each activity-slot combination
     const scoredAssignments = [];
-    activities.forEach((activity, aIdx) => {
+    activities.forEach((activity) => {
       slots.forEach((slot, sIdx) => {
         const minutesFromNow = (slot.getTime() - now.getTime()) / 60000;
         const prediction = CrowdEngine.predict(
-          getBestZoneForType(activity.zoneType, crowdSnapshot)?.id || 'concourse-n',
-          minutesFromNow
+          getBestZoneForType(activity.zoneType, crowdSnapshot)?.id ||
+            "concourse-n",
+          minutesFromNow,
         );
         // Lower density = better score; also factor in activity priority
         const score = (1 - prediction.predicted) * 100 - activity.priority * 2;
-        scoredAssignments.push({ activity, slot, slotIdx: sIdx, score, prediction });
+        scoredAssignments.push({
+          activity,
+          slot,
+          slotIdx: sIdx,
+          score,
+          prediction,
+        });
       });
     });
 
@@ -61,8 +140,9 @@ const FlowOptimizer = (() => {
     const usedActivities = new Set();
     const assignments = [];
 
-    scoredAssignments.forEach(sa => {
-      if (usedSlots.has(sa.slotIdx) || usedActivities.has(sa.activity.id)) return;
+    scoredAssignments.forEach((sa) => {
+      if (usedSlots.has(sa.slotIdx) || usedActivities.has(sa.activity.id))
+        return;
       usedSlots.add(sa.slotIdx);
       usedActivities.add(sa.activity.id);
       assignments.push(sa);
@@ -77,7 +157,9 @@ const FlowOptimizer = (() => {
     // Calculate savings
     const totalSaved = assignments.reduce((sum, a) => {
       const worstWait = Math.round(a.activity.baseDuration * 1.8);
-      const optimizedWait = Math.round(a.activity.baseDuration * (0.5 + a.prediction.predicted * 0.5));
+      const optimizedWait = Math.round(
+        a.activity.baseDuration * (0.5 + a.prediction.predicted * 0.5),
+      );
       return sum + (worstWait - optimizedWait);
     }, 0);
 
@@ -85,22 +167,31 @@ const FlowOptimizer = (() => {
       items: assignments.map((a, i) => {
         const time = new Date(a.slot.getTime() + staggerMin * 60000);
         const zone = getBestZoneForType(a.activity.zoneType, crowdSnapshot);
-        const waitReduction = Math.round(a.activity.baseDuration * (1 - a.prediction.predicted) * 0.6);
+        const waitReduction = Math.round(
+          a.activity.baseDuration * (1 - a.prediction.predicted) * 0.6,
+        );
         return {
           id: a.activity.id,
-          time: time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          time: time.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           label: a.activity.label,
           icon: a.activity.icon,
           duration: `${a.activity.baseDuration} min`,
-          zone: zone ? zone.name : 'Nearest available',
+          zone: zone ? zone.name : "Nearest available",
           density: Math.round(a.prediction.predicted * 100),
           confidence: Math.round(a.prediction.confidence * 100),
-          savings: waitReduction > 0 ? `${waitReduction} min saved vs. average` : null,
-          status: i === 0 ? 'active' : 'upcoming',
+          savings:
+            waitReduction > 0 ? `${waitReduction} min saved vs. average` : null,
+          status: i === 0 ? "active" : "upcoming",
         };
       }),
       totalTimeSaved: totalSaved,
-      flowScore: Math.min(99, Math.round(70 + totalSaved * 0.8 + Math.random() * 10)),
+      flowScore: Math.min(
+        99,
+        Math.round(70 + totalSaved * 0.8 + Math.random() * 10),
+      ),
     };
   }
 
@@ -110,19 +201,23 @@ const FlowOptimizer = (() => {
    * @returns {Array}
    */
   function selectActivities(profile) {
-    let selected = ACTIVITY_CATALOG.filter(a => a.mandatory);
-    const optional = ACTIVITY_CATALOG.filter(a => !a.mandatory);
+    let selected = ACTIVITY_CATALOG.filter((a) => a.mandatory);
+    const optional = ACTIVITY_CATALOG.filter((a) => !a.mandatory);
 
     // Pick 3-4 optional activities
     const shuffled = optional.sort(() => Math.random() - 0.5);
     selected = selected.concat(shuffled.slice(0, 3));
 
     // Accessibility adjustments
-    if (profile && profile.accessibility === 'wheelchair') {
-      selected.forEach(a => { a.baseDuration = Math.round(a.baseDuration * 1.3); });
+    if (profile && profile.accessibility === "wheelchair") {
+      selected.forEach((a) => {
+        a.baseDuration = Math.round(a.baseDuration * 1.3);
+      });
     }
-    if (profile && profile.accessibility === 'elderly') {
-      selected.forEach(a => { a.baseDuration = Math.round(a.baseDuration * 1.2); });
+    if (profile && profile.accessibility === "elderly") {
+      selected.forEach((a) => {
+        a.baseDuration = Math.round(a.baseDuration * 1.2);
+      });
     }
 
     return selected.sort((a, b) => a.priority - b.priority);
@@ -151,9 +246,12 @@ const FlowOptimizer = (() => {
    */
   function getBestZoneForType(type, snapshot) {
     if (!snapshot || !snapshot.zones) return CrowdEngine.findLeastCrowded(type);
-    const zones = snapshot.zones.filter(z => z.type === type);
+    const zones = snapshot.zones.filter((z) => z.type === type);
     if (!zones.length) return null;
-    return zones.reduce((best, z) => z.density < best.density ? z : best, zones[0]);
+    return zones.reduce(
+      (best, z) => (z.density < best.density ? z : best),
+      zones[0],
+    );
   }
 
   /**
@@ -166,20 +264,27 @@ const FlowOptimizer = (() => {
   function findMeetingPoint(sections, snapshot) {
     const zones = snapshot ? snapshot.zones : CrowdEngine.getSnapshot().zones;
     // Find zones for each section
-    const memberZones = sections.map(s => zones.find(z => z.id === s) || zones[0]);
+    const memberZones = sections.map(
+      (s) => zones.find((z) => z.id === s) || zones[0],
+    );
 
     // Calculate centroid
     const cx = memberZones.reduce((s, z) => s + z.x, 0) / memberZones.length;
     const cy = memberZones.reduce((s, z) => s + z.y, 0) / memberZones.length;
 
     // Find nearest low-density zone to centroid (prefer concourse/food types)
-    const candidates = zones.filter(z => ['concourse', 'food'].includes(z.type));
+    const candidates = zones.filter((z) =>
+      ["concourse", "food"].includes(z.type),
+    );
     let best = candidates[0];
     let bestScore = Infinity;
-    candidates.forEach(z => {
+    candidates.forEach((z) => {
       const dist = Math.sqrt((z.x - cx) ** 2 + (z.y - cy) ** 2);
       const score = dist + z.density * 0.5; // Balance distance and crowding
-      if (score < bestScore) { bestScore = score; best = z; }
+      if (score < bestScore) {
+        bestScore = score;
+        best = z;
+      }
     });
 
     return {

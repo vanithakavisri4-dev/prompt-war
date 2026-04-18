@@ -1,473 +1,896 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="ArenaFlow AI - Predictive Stadium Experience Orchestrator. AI-powered crowd flow optimization for large-scale sporting venues.">
-    <meta name="theme-color" content="#0a0e1a">
-    <meta name="deployment-revision" content="prompt-war-00002-pqt">
-    <meta name="google-cloud-project" content="prompt-war-493707">
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://generativelanguage.googleapis.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net https://*.run.app; img-src 'self' data:;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ArenaFlow AI - Predictive Stadium Experience Orchestrator. AI-powered crowd flow optimization for large-scale sporting venues."
+    />
+    <meta name="theme-color" content="#0a0e1a" />
+    <meta name="deployment-revision" content="prompt-war-00002-pqt" />
+    <meta name="google-cloud-project" content="prompt-war-493707" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://www.googletagmanager.com https://generativelanguage.googleapis.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.cloudfunctions.net https://*.run.app; img-src 'self' data:;"
+    />
     <title>ArenaFlow AI — Stadium Experience Orchestrator</title>
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+    ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX', { send_page_view: true });
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-XXXXXXXXXX", { send_page_view: true });
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-</head>
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
 
-<body>
+  <body>
     <!-- Skip Navigation for Accessibility -->
-    <a href="#main-content" class="skip-link" id="skip-nav">Skip to main content</a>
+    <a href="#main-content" class="skip-link" id="skip-nav"
+      >Skip to main content</a
+    >
 
     <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen" role="status" aria-label="Loading application">
-        <div class="loader-ring">
-            <div class="loader-ring-inner"></div>
-        </div>
-        <h2 class="loader-text">ArenaFlow AI</h2>
-        <p class="loader-sub">Initializing Stadium Intelligence...</p>
+    <div
+      id="loading-screen"
+      class="loading-screen"
+      role="status"
+      aria-label="Loading application"
+    >
+      <div class="loader-ring">
+        <div class="loader-ring-inner"></div>
+      </div>
+      <h2 class="loader-text">ArenaFlow AI</h2>
+      <p class="loader-sub">Initializing Stadium Intelligence...</p>
     </div>
 
     <!-- Onboarding Modal -->
-    <div id="onboarding-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="onboard-title"
-        style="display:none;">
-        <div class="modal-card glass-panel">
-            <div class="modal-header">
-                <div class="logo-mark">
-                    <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#6c63ff" />
-                                <stop offset="100%" stop-color="#00d4ff" />
-                            </linearGradient>
-                        </defs>
-                        <circle cx="20" cy="20" r="18" fill="none" stroke="url(#lg1)" stroke-width="2.5" />
-                        <path d="M12 20 Q20 8 28 20 Q20 32 12 20Z" fill="url(#lg1)" opacity="0.7" />
-                        <circle cx="20" cy="20" r="4" fill="#fff" />
-                    </svg>
-                </div>
-                <h2 id="onboard-title">Welcome to ArenaFlow AI</h2>
-                <p class="modal-subtitle">Your AI-powered stadium concierge</p>
-            </div>
-            <form id="onboarding-form" class="onboard-form" novalidate>
-                <div class="form-group">
-                    <label for="user-name">Your Name</label>
-                    <input type="text" id="user-name" placeholder="Enter your name" required autocomplete="name"
-                        aria-required="true">
-                </div>
-                <div class="form-group">
-                    <label for="venue-select">Select Venue</label>
-                    <select id="venue-select" required aria-required="true">
-                        <option value="">Choose a venue...</option>
-                        <option value="stadium-alpha">MetLife Stadium — East Rutherford</option>
-                        <option value="stadium-beta">Wembley Stadium — London</option>
-                        <option value="stadium-gamma">Melbourne Cricket Ground</option>
-                        <option value="stadium-delta">Narendra Modi Stadium — Ahmedabad</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="seat-section">Seat Section</label>
-                    <select id="seat-section" required aria-required="true">
-                        <option value="">Choose section...</option>
-                        <option value="north-lower">North Stand — Lower</option>
-                        <option value="north-upper">North Stand — Upper</option>
-                        <option value="south-lower">South Stand — Lower</option>
-                        <option value="south-upper">South Stand — Upper</option>
-                        <option value="east-lower">East Stand — Lower</option>
-                        <option value="east-upper">East Stand — Upper</option>
-                        <option value="west-lower">West Stand — Lower</option>
-                        <option value="west-upper">West Stand — Upper</option>
-                        <option value="vip">VIP Box</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="accessibility-needs">Accessibility Needs</label>
-                    <select id="accessibility-needs">
-                        <option value="none">None</option>
-                        <option value="wheelchair">Wheelchair Access</option>
-                        <option value="visual">Visual Impairment</option>
-                        <option value="hearing">Hearing Impairment</option>
-                        <option value="elderly">Elderly / Reduced Mobility</option>
-                        <option value="family">Family with Young Children</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="lang-select">Language</label>
-                    <select id="lang-select">
-                        <option value="en">English</option>
-                        <option value="es">Español</option>
-                        <option value="hi">हिन्दी</option>
-                        <option value="fr">Français</option>
-                        <option value="de">Deutsch</option>
-                        <option value="ja">日本語</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-primary" id="btn-enter-arena">
-                    <span>Enter Arena</span>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                        <path d="M4 10h12M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                </button>
-            </form>
+    <div
+      id="onboarding-modal"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboard-title"
+      style="display: none"
+    >
+      <div class="modal-card glass-panel">
+        <div class="modal-header">
+          <div class="logo-mark">
+            <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+              <defs>
+                <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6c63ff" />
+                  <stop offset="100%" stop-color="#00d4ff" />
+                </linearGradient>
+              </defs>
+              <circle
+                cx="20"
+                cy="20"
+                r="18"
+                fill="none"
+                stroke="url(#lg1)"
+                stroke-width="2.5"
+              />
+              <path
+                d="M12 20 Q20 8 28 20 Q20 32 12 20Z"
+                fill="url(#lg1)"
+                opacity="0.7"
+              />
+              <circle cx="20" cy="20" r="4" fill="#fff" />
+            </svg>
+          </div>
+          <h2 id="onboard-title">Welcome to ArenaFlow AI</h2>
+          <p class="modal-subtitle">Your AI-powered stadium concierge</p>
         </div>
+        <form id="onboarding-form" class="onboard-form" novalidate>
+          <div class="form-group">
+            <label for="user-name">Your Name</label>
+            <input
+              type="text"
+              id="user-name"
+              placeholder="Enter your name"
+              required
+              autocomplete="name"
+              aria-required="true"
+            />
+          </div>
+          <div class="form-group">
+            <label for="venue-select">Select Venue</label>
+            <select id="venue-select" required aria-required="true">
+              <option value="">Choose a venue...</option>
+              <option value="stadium-alpha">
+                MetLife Stadium — East Rutherford
+              </option>
+              <option value="stadium-beta">Wembley Stadium — London</option>
+              <option value="stadium-gamma">Melbourne Cricket Ground</option>
+              <option value="stadium-delta">
+                Narendra Modi Stadium — Ahmedabad
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="seat-section">Seat Section</label>
+            <select id="seat-section" required aria-required="true">
+              <option value="">Choose section...</option>
+              <option value="north-lower">North Stand — Lower</option>
+              <option value="north-upper">North Stand — Upper</option>
+              <option value="south-lower">South Stand — Lower</option>
+              <option value="south-upper">South Stand — Upper</option>
+              <option value="east-lower">East Stand — Lower</option>
+              <option value="east-upper">East Stand — Upper</option>
+              <option value="west-lower">West Stand — Lower</option>
+              <option value="west-upper">West Stand — Upper</option>
+              <option value="vip">VIP Box</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="accessibility-needs">Accessibility Needs</label>
+            <select id="accessibility-needs">
+              <option value="none">None</option>
+              <option value="wheelchair">Wheelchair Access</option>
+              <option value="visual">Visual Impairment</option>
+              <option value="hearing">Hearing Impairment</option>
+              <option value="elderly">Elderly / Reduced Mobility</option>
+              <option value="family">Family with Young Children</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="lang-select">Language</label>
+            <select id="lang-select">
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="hi">हिन्दी</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="ja">日本語</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-enter-arena">
+            <span>Enter Arena</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 10h12M12 5l5 5-5 5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- Main Application Shell -->
-    <div id="app-shell" class="app-shell" style="display:none;">
-        <!-- Sidebar Navigation -->
-        <nav id="sidebar" class="sidebar glass-panel" aria-label="Main navigation">
-            <div class="sidebar-logo">
-                <svg viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#6c63ff" />
-                            <stop offset="100%" stop-color="#00d4ff" />
-                        </linearGradient>
-                    </defs>
-                    <circle cx="20" cy="20" r="18" fill="none" stroke="url(#lg2)" stroke-width="2.5" />
-                    <path d="M12 20 Q20 8 28 20 Q20 32 12 20Z" fill="url(#lg2)" opacity="0.7" />
-                    <circle cx="20" cy="20" r="4" fill="#fff" />
+    <div id="app-shell" class="app-shell" style="display: none">
+      <!-- Sidebar Navigation -->
+      <nav
+        id="sidebar"
+        class="sidebar glass-panel"
+        aria-label="Main navigation"
+      >
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
+            <defs>
+              <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#6c63ff" />
+                <stop offset="100%" stop-color="#00d4ff" />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="20"
+              cy="20"
+              r="18"
+              fill="none"
+              stroke="url(#lg2)"
+              stroke-width="2.5"
+            />
+            <path
+              d="M12 20 Q20 8 28 20 Q20 32 12 20Z"
+              fill="url(#lg2)"
+              opacity="0.7"
+            />
+            <circle cx="20" cy="20" r="4" fill="#fff" />
+          </svg>
+          <span class="logo-text">ArenaFlow</span>
+        </div>
+        <ul class="nav-list" role="menubar">
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn active"
+              data-view="dashboard"
+              id="nav-dashboard"
+              aria-current="page"
+            >
+              <span class="nav-icon" aria-hidden="true">📊</span
+              ><span>Dashboard</span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn"
+              data-view="flow"
+              id="nav-flow"
+            >
+              <span class="nav-icon" aria-hidden="true">🔀</span
+              ><span>My Flow</span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn"
+              data-view="map"
+              id="nav-map"
+            >
+              <span class="nav-icon" aria-hidden="true">🗺️</span
+              ><span>Live Map</span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn"
+              data-view="concierge"
+              id="nav-concierge"
+            >
+              <span class="nav-icon" aria-hidden="true">🤖</span
+              ><span>AI Concierge</span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn"
+              data-view="social"
+              id="nav-social"
+            >
+              <span class="nav-icon" aria-hidden="true">👥</span
+              ><span>Social Sync</span>
+            </button>
+          </li>
+          <li role="none">
+            <button
+              role="menuitem"
+              class="nav-btn"
+              data-view="alerts"
+              id="nav-alerts"
+            >
+              <span class="nav-icon" aria-hidden="true">🔔</span
+              ><span>Alerts</span>
+            </button>
+          </li>
+        </ul>
+        <div class="sidebar-footer">
+          <button class="nav-btn" id="nav-settings" data-view="settings">
+            <span class="nav-icon" aria-hidden="true">⚙️</span
+            ><span>Settings</span>
+          </button>
+          <button
+            class="nav-btn"
+            id="btn-emergency"
+            aria-label="Emergency evacuation mode"
+          >
+            <span class="nav-icon" aria-hidden="true">🚨</span
+            ><span>Emergency</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main id="main-content" class="main-content" tabindex="-1">
+        <!-- Top Bar -->
+        <header class="top-bar glass-panel" role="banner">
+          <button
+            id="sidebar-toggle"
+            class="sidebar-toggle"
+            aria-label="Toggle sidebar"
+            aria-expanded="true"
+          >
+            ☰
+          </button>
+          <div class="top-bar-info">
+            <h1 id="view-title" class="view-title">Dashboard</h1>
+            <span id="venue-name-display" class="venue-badge"></span>
+          </div>
+          <div class="top-bar-actions">
+            <div class="live-indicator" aria-label="Live data active">
+              <span class="pulse-dot"></span> LIVE
+            </div>
+            <span id="current-time" class="clock" aria-live="polite"></span>
+            <button
+              id="btn-high-contrast"
+              class="icon-btn"
+              aria-label="Toggle high contrast mode"
+              title="High Contrast"
+            >
+              ◐
+            </button>
+            <button
+              id="btn-font-size"
+              class="icon-btn"
+              aria-label="Increase font size"
+              title="Font Size"
+            >
+              A+
+            </button>
+          </div>
+        </header>
+
+        <!-- Dashboard View -->
+        <section
+          id="view-dashboard"
+          class="view active"
+          role="region"
+          aria-label="Dashboard overview"
+        >
+          <div class="dashboard-grid">
+            <div class="card glass-panel stat-card" id="card-crowd">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <span class="stat-label">Crowd Density</span>
+                <span class="stat-value" id="stat-crowd">62%</span>
+                <span class="stat-trend trend-up" id="trend-crowd">↑ 3%</span>
+              </div>
+              <div class="stat-bar">
+                <div
+                  class="stat-bar-fill"
+                  id="bar-crowd"
+                  style="width: 62%"
+                  role="progressbar"
+                  aria-valuenow="62"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+            </div>
+            <div class="card glass-panel stat-card" id="card-wait">
+              <div class="stat-icon">⏱️</div>
+              <div class="stat-info">
+                <span class="stat-label">Avg Wait Time</span>
+                <span class="stat-value" id="stat-wait">8 min</span>
+                <span class="stat-trend trend-down" id="trend-wait"
+                  >↓ 2 min</span
+                >
+              </div>
+              <div class="stat-bar">
+                <div
+                  class="stat-bar-fill wait-bar"
+                  id="bar-wait"
+                  style="width: 40%"
+                  role="progressbar"
+                  aria-valuenow="40"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+            </div>
+            <div class="card glass-panel stat-card" id="card-flow">
+              <div class="stat-icon">🔀</div>
+              <div class="stat-info">
+                <span class="stat-label">Flow Score</span>
+                <span class="stat-value" id="stat-flow">87/100</span>
+                <span class="stat-trend trend-up" id="trend-flow">↑ 5</span>
+              </div>
+              <div class="stat-bar">
+                <div
+                  class="stat-bar-fill flow-bar"
+                  id="bar-flow"
+                  style="width: 87%"
+                  role="progressbar"
+                  aria-valuenow="87"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+            </div>
+            <div class="card glass-panel stat-card" id="card-safety">
+              <div class="stat-icon">🛡️</div>
+              <div class="stat-info">
+                <span class="stat-label">Safety Index</span>
+                <span class="stat-value" id="stat-safety">95%</span>
+                <span class="stat-trend trend-up" id="trend-safety"
+                  >Optimal</span
+                >
+              </div>
+              <div class="stat-bar">
+                <div
+                  class="stat-bar-fill safety-bar"
+                  id="bar-safety"
+                  style="width: 95%"
+                  role="progressbar"
+                  aria-valuenow="95"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crowd Heatmap Canvas -->
+          <div class="dashboard-row">
+            <div class="card glass-panel heatmap-card" id="card-heatmap">
+              <h2 class="card-title">Stadium Crowd Heatmap</h2>
+              <p class="card-subtitle">
+                Real-time density visualization — AI-predicted flow zones
+              </p>
+              <canvas
+                id="heatmap-canvas"
+                width="700"
+                height="400"
+                aria-label="Stadium crowd density heatmap visualization"
+                role="img"
+              ></canvas>
+              <div class="heatmap-legend">
+                <span class="legend-item"
+                  ><span class="legend-dot low"></span> Low</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot medium"></span> Medium</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot high"></span> High</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot critical"></span> Critical</span
+                >
+              </div>
+            </div>
+            <div
+              class="card glass-panel predictions-card"
+              id="card-predictions"
+            >
+              <h2 class="card-title">AI Predictions</h2>
+              <p class="card-subtitle">Next 30 minutes forecast</p>
+              <ul
+                class="prediction-list"
+                id="prediction-list"
+                aria-label="AI crowd predictions"
+              >
+                <!-- Populated by JS -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card glass-panel" id="card-quick-actions">
+            <h2 class="card-title">Quick Actions</h2>
+            <div class="quick-actions-grid">
+              <button
+                class="action-btn"
+                id="qa-food"
+                aria-label="Find nearest food with shortest wait"
+              >
+                <span class="action-icon">🍔</span><span>Nearest Food</span
+                ><span class="action-wait" id="qa-food-wait">~4 min</span>
+              </button>
+              <button
+                class="action-btn"
+                id="qa-restroom"
+                aria-label="Find nearest restroom with shortest wait"
+              >
+                <span class="action-icon">🚻</span><span>Restroom</span
+                ><span class="action-wait" id="qa-restroom-wait">~2 min</span>
+              </button>
+              <button
+                class="action-btn"
+                id="qa-merch"
+                aria-label="Find merchandise store"
+              >
+                <span class="action-icon">🛍️</span><span>Merch Store</span
+                ><span class="action-wait" id="qa-merch-wait">~6 min</span>
+              </button>
+              <button
+                class="action-btn"
+                id="qa-exit"
+                aria-label="Find fastest exit"
+              >
+                <span class="action-icon">🚪</span><span>Fastest Exit</span
+                ><span class="action-wait" id="qa-exit-wait">Gate B</span>
+              </button>
+              <button
+                class="action-btn"
+                id="qa-medical"
+                aria-label="Find nearest medical station"
+              >
+                <span class="action-icon">🏥</span><span>Medical</span
+                ><span class="action-wait" id="qa-medical-wait">East Wing</span>
+              </button>
+              <button
+                class="action-btn"
+                id="qa-seat"
+                aria-label="Navigate back to your seat"
+              >
+                <span class="action-icon">💺</span><span>My Seat</span
+                ><span class="action-wait" id="qa-seat-wait">Section N</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- My Flow View -->
+        <section
+          id="view-flow"
+          class="view"
+          role="region"
+          aria-label="Personalized experience flow"
+          style="display: none"
+        >
+          <div class="card glass-panel flow-header-card">
+            <h2 class="card-title">Your Optimized Experience Flow</h2>
+            <p class="card-subtitle">
+              AI-orchestrated activity timeline — minimizing wait times across
+              all attendees
+            </p>
+            <div class="flow-stats">
+              <div class="flow-stat">
+                <span class="flow-stat-value" id="flow-time-saved">23 min</span
+                ><span class="flow-stat-label">Time Saved</span>
+              </div>
+              <div class="flow-stat">
+                <span class="flow-stat-value" id="flow-activities">6</span
+                ><span class="flow-stat-label">Activities</span>
+              </div>
+              <div class="flow-stat">
+                <span class="flow-stat-value" id="flow-score-val">94</span
+                ><span class="flow-stat-label">Flow Score</span>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flow-timeline"
+            id="flow-timeline"
+            role="list"
+            aria-label="Activity timeline"
+          >
+            <!-- Populated by JS -->
+          </div>
+          <button
+            class="btn-primary"
+            id="btn-regenerate-flow"
+            style="margin-top: 1.5rem"
+          >
+            <span>🔄 Regenerate Flow</span>
+          </button>
+        </section>
+
+        <!-- Live Map View -->
+        <section
+          id="view-map"
+          class="view"
+          role="region"
+          aria-label="Interactive stadium map"
+          style="display: none"
+        >
+          <div class="card glass-panel map-container-card">
+            <h2 class="card-title">Interactive Stadium Map</h2>
+            <p class="card-subtitle">
+              Powered by Google Maps — real-time crowd overlays
+            </p>
+            <div id="google-map-container" class="map-wrapper">
+              <canvas
+                id="map-canvas"
+                class="map-canvas"
+                aria-label="Interactive stadium map with crowd density overlay"
+                role="img"
+                >Stadium map showing real-time crowd density across all zones.
+                Enable JavaScript for interactive features.</canvas
+              >
+            </div>
+            <div class="map-controls">
+              <button
+                class="map-ctrl-btn active"
+                id="map-layer-crowd"
+                aria-pressed="true"
+              >
+                Crowd Layer
+              </button>
+              <button
+                class="map-ctrl-btn"
+                id="map-layer-food"
+                aria-pressed="false"
+              >
+                Food & Drink
+              </button>
+              <button
+                class="map-ctrl-btn"
+                id="map-layer-facilities"
+                aria-pressed="false"
+              >
+                Facilities
+              </button>
+              <button
+                class="map-ctrl-btn"
+                id="map-layer-exits"
+                aria-pressed="false"
+              >
+                Exits
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Concierge View -->
+        <section
+          id="view-concierge"
+          class="view"
+          role="region"
+          aria-label="AI Concierge chat"
+          style="display: none"
+        >
+          <div class="card glass-panel chat-card">
+            <div class="chat-header">
+              <h2 class="card-title">AI Concierge</h2>
+              <p class="card-subtitle">
+                Powered by Google Gemini — ask anything about the venue
+              </p>
+            </div>
+            <div
+              class="chat-messages"
+              id="chat-messages"
+              role="log"
+              aria-live="polite"
+              aria-label="Chat messages"
+            >
+              <div class="chat-msg bot">
+                <div class="chat-avatar" aria-hidden="true">🤖</div>
+                <div class="chat-bubble">
+                  <p>
+                    Hello! I'm your ArenaFlow AI concierge. I can help you with:
+                  </p>
+                  <ul>
+                    <li>🍔 Finding food with shortest wait times</li>
+                    <li>🚻 Locating nearest facilities</li>
+                    <li>🗺️ Navigation and directions</li>
+                    <li>📊 Crowd predictions and best timing</li>
+                    <li>👥 Coordinating with your group</li>
+                  </ul>
+                  <p>How can I help you today?</p>
+                </div>
+              </div>
+            </div>
+            <form id="chat-form" class="chat-input-area" novalidate>
+              <label for="chat-input" class="sr-only">Type your message</label>
+              <input
+                type="text"
+                id="chat-input"
+                class="chat-input"
+                placeholder="Ask me anything..."
+                autocomplete="off"
+                aria-label="Chat message input"
+              />
+              <button
+                type="submit"
+                class="btn-send"
+                id="btn-send-chat"
+                aria-label="Send message"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
-                <span class="logo-text">ArenaFlow</span>
-            </div>
-            <ul class="nav-list" role="menubar">
-                <li role="none"><button role="menuitem" class="nav-btn active" data-view="dashboard" id="nav-dashboard"
-                        aria-current="page"><span class="nav-icon"
-                            aria-hidden="true">📊</span><span>Dashboard</span></button></li>
-                <li role="none"><button role="menuitem" class="nav-btn" data-view="flow" id="nav-flow"><span
-                            class="nav-icon" aria-hidden="true">🔀</span><span>My Flow</span></button></li>
-                <li role="none"><button role="menuitem" class="nav-btn" data-view="map" id="nav-map"><span
-                            class="nav-icon" aria-hidden="true">🗺️</span><span>Live Map</span></button></li>
-                <li role="none"><button role="menuitem" class="nav-btn" data-view="concierge" id="nav-concierge"><span
-                            class="nav-icon" aria-hidden="true">🤖</span><span>AI Concierge</span></button></li>
-                <li role="none"><button role="menuitem" class="nav-btn" data-view="social" id="nav-social"><span
-                            class="nav-icon" aria-hidden="true">👥</span><span>Social Sync</span></button></li>
-                <li role="none"><button role="menuitem" class="nav-btn" data-view="alerts" id="nav-alerts"><span
-                            class="nav-icon" aria-hidden="true">🔔</span><span>Alerts</span></button></li>
-            </ul>
-            <div class="sidebar-footer">
-                <button class="nav-btn" id="nav-settings" data-view="settings"><span class="nav-icon"
-                        aria-hidden="true">⚙️</span><span>Settings</span></button>
-                <button class="nav-btn" id="btn-emergency" aria-label="Emergency evacuation mode"><span class="nav-icon"
-                        aria-hidden="true">🚨</span><span>Emergency</span></button>
-            </div>
-        </nav>
+              </button>
+            </form>
+          </div>
+        </section>
 
-        <!-- Main Content Area -->
-        <main id="main-content" class="main-content" tabindex="-1">
-            <!-- Top Bar -->
-            <header class="top-bar glass-panel" role="banner">
-                <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar"
-                    aria-expanded="true">☰</button>
-                <div class="top-bar-info">
-                    <h1 id="view-title" class="view-title">Dashboard</h1>
-                    <span id="venue-name-display" class="venue-badge"></span>
+        <!-- Social Sync View -->
+        <section
+          id="view-social"
+          class="view"
+          role="region"
+          aria-label="Social sync and group coordination"
+          style="display: none"
+        >
+          <div class="card glass-panel">
+            <h2 class="card-title">Social Sync</h2>
+            <p class="card-subtitle">
+              Coordinate with your group — AI finds optimal meeting points
+            </p>
+            <div class="social-grid">
+              <div class="social-create">
+                <h3>Create a Group</h3>
+                <div class="form-group">
+                  <label for="group-name">Group Name</label>
+                  <input
+                    type="text"
+                    id="group-name"
+                    placeholder="e.g., Row 5 Crew"
+                    aria-label="Group name"
+                  />
                 </div>
-                <div class="top-bar-actions">
-                    <div class="live-indicator" aria-label="Live data active"><span class="pulse-dot"></span> LIVE</div>
-                    <span id="current-time" class="clock" aria-live="polite"></span>
-                    <button id="btn-high-contrast" class="icon-btn" aria-label="Toggle high contrast mode"
-                        title="High Contrast">◐</button>
-                    <button id="btn-font-size" class="icon-btn" aria-label="Increase font size"
-                        title="Font Size">A+</button>
-                </div>
-            </header>
-
-            <!-- Dashboard View -->
-            <section id="view-dashboard" class="view active" role="region" aria-label="Dashboard overview">
-                <div class="dashboard-grid">
-                    <div class="card glass-panel stat-card" id="card-crowd">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Crowd Density</span>
-                            <span class="stat-value" id="stat-crowd">62%</span>
-                            <span class="stat-trend trend-up" id="trend-crowd">↑ 3%</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill" id="bar-crowd" style="width:62%" role="progressbar"
-                                aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="card glass-panel stat-card" id="card-wait">
-                        <div class="stat-icon">⏱️</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Avg Wait Time</span>
-                            <span class="stat-value" id="stat-wait">8 min</span>
-                            <span class="stat-trend trend-down" id="trend-wait">↓ 2 min</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill wait-bar" id="bar-wait" style="width:40%" role="progressbar"
-                                aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="card glass-panel stat-card" id="card-flow">
-                        <div class="stat-icon">🔀</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Flow Score</span>
-                            <span class="stat-value" id="stat-flow">87/100</span>
-                            <span class="stat-trend trend-up" id="trend-flow">↑ 5</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill flow-bar" id="bar-flow" style="width:87%" role="progressbar"
-                                aria-valuenow="87" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="card glass-panel stat-card" id="card-safety">
-                        <div class="stat-icon">🛡️</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Safety Index</span>
-                            <span class="stat-value" id="stat-safety">95%</span>
-                            <span class="stat-trend trend-up" id="trend-safety">Optimal</span>
-                        </div>
-                        <div class="stat-bar">
-                            <div class="stat-bar-fill safety-bar" id="bar-safety" style="width:95%" role="progressbar"
-                                aria-valuenow="95" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Crowd Heatmap Canvas -->
-                <div class="dashboard-row">
-                    <div class="card glass-panel heatmap-card" id="card-heatmap">
-                        <h2 class="card-title">Stadium Crowd Heatmap</h2>
-                        <p class="card-subtitle">Real-time density visualization — AI-predicted flow zones</p>
-                        <canvas id="heatmap-canvas" width="700" height="400"
-                            aria-label="Stadium crowd density heatmap visualization" role="img"></canvas>
-                        <div class="heatmap-legend">
-                            <span class="legend-item"><span class="legend-dot low"></span> Low</span>
-                            <span class="legend-item"><span class="legend-dot medium"></span> Medium</span>
-                            <span class="legend-item"><span class="legend-dot high"></span> High</span>
-                            <span class="legend-item"><span class="legend-dot critical"></span> Critical</span>
-                        </div>
-                    </div>
-                    <div class="card glass-panel predictions-card" id="card-predictions">
-                        <h2 class="card-title">AI Predictions</h2>
-                        <p class="card-subtitle">Next 30 minutes forecast</p>
-                        <ul class="prediction-list" id="prediction-list" aria-label="AI crowd predictions">
-                            <!-- Populated by JS -->
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="card glass-panel" id="card-quick-actions">
-                    <h2 class="card-title">Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <button class="action-btn" id="qa-food" aria-label="Find nearest food with shortest wait"><span
-                                class="action-icon">🍔</span><span>Nearest Food</span><span class="action-wait"
-                                id="qa-food-wait">~4 min</span></button>
-                        <button class="action-btn" id="qa-restroom"
-                            aria-label="Find nearest restroom with shortest wait"><span
-                                class="action-icon">🚻</span><span>Restroom</span><span class="action-wait"
-                                id="qa-restroom-wait">~2 min</span></button>
-                        <button class="action-btn" id="qa-merch" aria-label="Find merchandise store"><span
-                                class="action-icon">🛍️</span><span>Merch Store</span><span class="action-wait"
-                                id="qa-merch-wait">~6 min</span></button>
-                        <button class="action-btn" id="qa-exit" aria-label="Find fastest exit"><span
-                                class="action-icon">🚪</span><span>Fastest Exit</span><span class="action-wait"
-                                id="qa-exit-wait">Gate B</span></button>
-                        <button class="action-btn" id="qa-medical" aria-label="Find nearest medical station"><span
-                                class="action-icon">🏥</span><span>Medical</span><span class="action-wait"
-                                id="qa-medical-wait">East Wing</span></button>
-                        <button class="action-btn" id="qa-seat" aria-label="Navigate back to your seat"><span
-                                class="action-icon">💺</span><span>My Seat</span><span class="action-wait"
-                                id="qa-seat-wait">Section N</span></button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- My Flow View -->
-            <section id="view-flow" class="view" role="region" aria-label="Personalized experience flow"
-                style="display:none;">
-                <div class="card glass-panel flow-header-card">
-                    <h2 class="card-title">Your Optimized Experience Flow</h2>
-                    <p class="card-subtitle">AI-orchestrated activity timeline — minimizing wait times across all
-                        attendees</p>
-                    <div class="flow-stats">
-                        <div class="flow-stat"><span class="flow-stat-value" id="flow-time-saved">23 min</span><span
-                                class="flow-stat-label">Time Saved</span></div>
-                        <div class="flow-stat"><span class="flow-stat-value" id="flow-activities">6</span><span
-                                class="flow-stat-label">Activities</span></div>
-                        <div class="flow-stat"><span class="flow-stat-value" id="flow-score-val">94</span><span
-                                class="flow-stat-label">Flow Score</span></div>
-                    </div>
-                </div>
-                <div class="flow-timeline" id="flow-timeline" role="list" aria-label="Activity timeline">
-                    <!-- Populated by JS -->
-                </div>
-                <button class="btn-primary" id="btn-regenerate-flow" style="margin-top:1.5rem;">
-                    <span>🔄 Regenerate Flow</span>
+                <button class="btn-primary" id="btn-create-group">
+                  Create Group
                 </button>
-            </section>
-
-            <!-- Live Map View -->
-            <section id="view-map" class="view" role="region" aria-label="Interactive stadium map"
-                style="display:none;">
-                <div class="card glass-panel map-container-card">
-                    <h2 class="card-title">Interactive Stadium Map</h2>
-                    <p class="card-subtitle">Powered by Google Maps — real-time crowd overlays</p>
-                    <div id="google-map-container" class="map-wrapper">
-                        <canvas id="map-canvas" class="map-canvas"
-                            aria-label="Interactive stadium map with crowd density overlay" role="img">Stadium map showing real-time crowd density across all zones. Enable JavaScript for interactive features.</canvas>
-                    </div>
-                    <div class="map-controls">
-                        <button class="map-ctrl-btn active" id="map-layer-crowd" aria-pressed="true">Crowd
-                            Layer</button>
-                        <button class="map-ctrl-btn" id="map-layer-food" aria-pressed="false">Food & Drink</button>
-                        <button class="map-ctrl-btn" id="map-layer-facilities" aria-pressed="false">Facilities</button>
-                        <button class="map-ctrl-btn" id="map-layer-exits" aria-pressed="false">Exits</button>
-                    </div>
+                <div
+                  id="group-code-display"
+                  class="group-code-display"
+                  style="display: none"
+                  aria-live="polite"
+                >
+                  <span>Share this code:</span>
+                  <strong id="group-code"></strong>
                 </div>
-            </section>
-
-            <!-- AI Concierge View -->
-            <section id="view-concierge" class="view" role="region" aria-label="AI Concierge chat"
-                style="display:none;">
-                <div class="card glass-panel chat-card">
-                    <div class="chat-header">
-                        <h2 class="card-title">AI Concierge</h2>
-                        <p class="card-subtitle">Powered by Google Gemini — ask anything about the venue</p>
-                    </div>
-                    <div class="chat-messages" id="chat-messages" role="log" aria-live="polite"
-                        aria-label="Chat messages">
-                        <div class="chat-msg bot">
-                            <div class="chat-avatar" aria-hidden="true">🤖</div>
-                            <div class="chat-bubble">
-                                <p>Hello! I'm your ArenaFlow AI concierge. I can help you with:</p>
-                                <ul>
-                                    <li>🍔 Finding food with shortest wait times</li>
-                                    <li>🚻 Locating nearest facilities</li>
-                                    <li>🗺️ Navigation and directions</li>
-                                    <li>📊 Crowd predictions and best timing</li>
-                                    <li>👥 Coordinating with your group</li>
-                                </ul>
-                                <p>How can I help you today?</p>
-                            </div>
-                        </div>
-                    </div>
-                    <form id="chat-form" class="chat-input-area" novalidate>
-                        <label for="chat-input" class="sr-only">Type your message</label>
-                        <input type="text" id="chat-input" class="chat-input" placeholder="Ask me anything..."
-                            autocomplete="off" aria-label="Chat message input">
-                        <button type="submit" class="btn-send" id="btn-send-chat" aria-label="Send message">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </button>
-                    </form>
+              </div>
+              <div class="social-join">
+                <h3>Join a Group</h3>
+                <div class="form-group">
+                  <label for="join-code">Enter Group Code</label>
+                  <input
+                    type="text"
+                    id="join-code"
+                    placeholder="e.g., ARENA-X7K2"
+                    aria-label="Group join code"
+                  />
                 </div>
-            </section>
+                <button class="btn-primary" id="btn-join-group">
+                  Join Group
+                </button>
+              </div>
+            </div>
+            <div
+              id="group-members-panel"
+              class="group-members-panel"
+              style="display: none"
+            >
+              <h3>Group Members</h3>
+              <ul
+                id="group-members-list"
+                class="members-list"
+                aria-label="Group members"
+              ></ul>
+              <button class="btn-primary" id="btn-find-meetup">
+                🤝 AI Find Meeting Point
+              </button>
+              <div
+                id="meetup-result"
+                class="meetup-result"
+                style="display: none"
+                aria-live="polite"
+              ></div>
+            </div>
+          </div>
+        </section>
 
-            <!-- Social Sync View -->
-            <section id="view-social" class="view" role="region" aria-label="Social sync and group coordination"
-                style="display:none;">
-                <div class="card glass-panel">
-                    <h2 class="card-title">Social Sync</h2>
-                    <p class="card-subtitle">Coordinate with your group — AI finds optimal meeting points</p>
-                    <div class="social-grid">
-                        <div class="social-create">
-                            <h3>Create a Group</h3>
-                            <div class="form-group">
-                                <label for="group-name">Group Name</label>
-                                <input type="text" id="group-name" placeholder="e.g., Row 5 Crew" aria-label="Group name">
-                            </div>
-                            <button class="btn-primary" id="btn-create-group">Create Group</button>
-                            <div id="group-code-display" class="group-code-display" style="display:none;"
-                                aria-live="polite">
-                                <span>Share this code:</span>
-                                <strong id="group-code"></strong>
-                            </div>
-                        </div>
-                        <div class="social-join">
-                            <h3>Join a Group</h3>
-                            <div class="form-group">
-                                <label for="join-code">Enter Group Code</label>
-                                <input type="text" id="join-code" placeholder="e.g., ARENA-X7K2" aria-label="Group join code">
-                            </div>
-                            <button class="btn-primary" id="btn-join-group">Join Group</button>
-                        </div>
-                    </div>
-                    <div id="group-members-panel" class="group-members-panel" style="display:none;">
-                        <h3>Group Members</h3>
-                        <ul id="group-members-list" class="members-list" aria-label="Group members"></ul>
-                        <button class="btn-primary" id="btn-find-meetup">🤝 AI Find Meeting Point</button>
-                        <div id="meetup-result" class="meetup-result" style="display:none;" aria-live="polite"></div>
-                    </div>
-                </div>
-            </section>
+        <!-- Alerts View -->
+        <section
+          id="view-alerts"
+          class="view"
+          role="region"
+          aria-label="Notifications and alerts"
+          style="display: none"
+        >
+          <div class="card glass-panel">
+            <h2 class="card-title">Alerts & Notifications</h2>
+            <p class="card-subtitle">Real-time updates from ArenaFlow AI</p>
+            <div
+              id="alerts-list"
+              class="alerts-list"
+              role="list"
+              aria-label="Alert notifications"
+            >
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
 
-            <!-- Alerts View -->
-            <section id="view-alerts" class="view" role="region" aria-label="Notifications and alerts"
-                style="display:none;">
-                <div class="card glass-panel">
-                    <h2 class="card-title">Alerts & Notifications</h2>
-                    <p class="card-subtitle">Real-time updates from ArenaFlow AI</p>
-                    <div id="alerts-list" class="alerts-list" role="list" aria-label="Alert notifications">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Settings View -->
-            <section id="view-settings" class="view" role="region" aria-label="Application settings"
-                style="display:none;">
-                <div class="card glass-panel">
-                    <h2 class="card-title">Settings</h2>
-                    <div class="settings-grid">
-                        <div class="setting-item">
-                            <label for="setting-theme">Theme</label>
-                            <select id="setting-theme">
-                                <option value="dark">Dark</option>
-                                <option value="light">Light</option>
-                                <option value="high-contrast">High Contrast</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label for="setting-notifications">Push Notifications</label>
-                            <input type="checkbox" id="setting-notifications" checked role="switch" aria-checked="true">
-                        </div>
-                        <div class="setting-item">
-                            <label for="setting-haptics">Haptic Feedback</label>
-                            <input type="checkbox" id="setting-haptics" checked role="switch" aria-checked="true">
-                        </div>
-                        <div class="setting-item">
-                            <label for="setting-font-scale">Font Scale</label>
-                            <input type="range" id="setting-font-scale" min="80" max="150" value="100"
-                                aria-valuemin="80" aria-valuemax="150" aria-valuenow="100">
-                        </div>
-                        <div class="setting-item">
-                            <label for="setting-reduce-motion">Reduce Motion</label>
-                            <input type="checkbox" id="setting-reduce-motion" role="switch" aria-checked="false">
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+        <!-- Settings View -->
+        <section
+          id="view-settings"
+          class="view"
+          role="region"
+          aria-label="Application settings"
+          style="display: none"
+        >
+          <div class="card glass-panel">
+            <h2 class="card-title">Settings</h2>
+            <div class="settings-grid">
+              <div class="setting-item">
+                <label for="setting-theme">Theme</label>
+                <select id="setting-theme">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="high-contrast">High Contrast</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <label for="setting-notifications">Push Notifications</label>
+                <input
+                  type="checkbox"
+                  id="setting-notifications"
+                  checked
+                  role="switch"
+                  aria-checked="true"
+                />
+              </div>
+              <div class="setting-item">
+                <label for="setting-haptics">Haptic Feedback</label>
+                <input
+                  type="checkbox"
+                  id="setting-haptics"
+                  checked
+                  role="switch"
+                  aria-checked="true"
+                />
+              </div>
+              <div class="setting-item">
+                <label for="setting-font-scale">Font Scale</label>
+                <input
+                  type="range"
+                  id="setting-font-scale"
+                  min="80"
+                  max="150"
+                  value="100"
+                  aria-valuemin="80"
+                  aria-valuemax="150"
+                  aria-valuenow="100"
+                />
+              </div>
+              <div class="setting-item">
+                <label for="setting-reduce-motion">Reduce Motion</label>
+                <input
+                  type="checkbox"
+                  id="setting-reduce-motion"
+                  role="switch"
+                  aria-checked="false"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
     <!-- Emergency Overlay -->
-    <div id="emergency-overlay" class="emergency-overlay" role="alert" aria-live="assertive" style="display:none;">
-        <div class="emergency-content">
-            <h2>🚨 EMERGENCY EVACUATION</h2>
-            <p id="emergency-msg">Follow the highlighted route to your nearest exit.</p>
-            <div class="emergency-route" id="emergency-route"></div>
-            <button class="btn-emergency-dismiss" id="btn-dismiss-emergency">I'm Safe — Dismiss</button>
-        </div>
+    <div
+      id="emergency-overlay"
+      class="emergency-overlay"
+      role="alert"
+      aria-live="assertive"
+      style="display: none"
+    >
+      <div class="emergency-content">
+        <h2>🚨 EMERGENCY EVACUATION</h2>
+        <p id="emergency-msg">
+          Follow the highlighted route to your nearest exit.
+        </p>
+        <div class="emergency-route" id="emergency-route"></div>
+        <button class="btn-emergency-dismiss" id="btn-dismiss-emergency">
+          I'm Safe — Dismiss
+        </button>
+      </div>
     </div>
 
     <!-- Toast Container -->
@@ -483,6 +906,5 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/accessibility.js"></script>
     <script src="js/app.js"></script>
-</body>
-
+  </body>
 </html>

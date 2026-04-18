@@ -16,9 +16,9 @@
  * @author ArenaFlow AI Team
  * @see https://www.w3.org/WAI/WCAG21/quickref/
  */
-'use strict';
-
+// eslint-disable-next-line no-unused-vars
 const AccessibilityService = (() => {
+  "use strict";
   /* ── Constants ─────────────────────────────────────────────── */
 
   /** Minimum allowed font scale multiplier. */
@@ -34,27 +34,28 @@ const AccessibilityService = (() => {
   const ANNOUNCEMENT_DURATION_MS = 3000;
 
   /** CSS custom property name for font scale. */
-  const CSS_FONT_SCALE_PROP = '--font-scale';
+  const CSS_FONT_SCALE_PROP = "--font-scale";
 
   /** Data attribute for theme selection. */
-  const THEME_DATA_ATTR = 'data-theme';
+  const THEME_DATA_ATTR = "data-theme";
 
   /** CSS class toggled for reduced motion. */
-  const REDUCE_MOTION_CLASS = 'reduce-motion';
+  const REDUCE_MOTION_CLASS = "reduce-motion";
 
   /** CSS class added when mouse is primary input device. */
-  const USING_MOUSE_CLASS = 'using-mouse';
+  const USING_MOUSE_CLASS = "using-mouse";
 
   /** Storage keys for persistent preferences. */
   const STORAGE_KEYS = Object.freeze({
-    fontScale: 'fontScale',
-    highContrast: 'highContrast',
-    reduceMotion: 'reduceMotion',
-    theme: 'theme',
+    fontScale: "fontScale",
+    highContrast: "highContrast",
+    reduceMotion: "reduceMotion",
+    theme: "theme",
   });
 
   /** Focusable element selector for focus trapping. */
-  const FOCUSABLE_SELECTOR = 'input, select, button, textarea, a[href], [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE_SELECTOR =
+    'input, select, button, textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
   /* ── State ─────────────────────────────────────────────────── */
 
@@ -91,7 +92,7 @@ const AccessibilityService = (() => {
       }
 
       // Respect OS-level reduced motion preference
-      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
       if (motionQuery.matches) {
         toggleReduceMotion(true);
       }
@@ -99,9 +100,11 @@ const AccessibilityService = (() => {
       setupKeyboardNav();
       setupLiveRegions();
 
-      console.info('[AccessibilityService] Initialized — WCAG 2.1 AA features active');
+      console.info(
+        "[AccessibilityService] Initialized — WCAG 2.1 AA features active",
+      );
     } catch (error) {
-      console.error('[AccessibilityService] Initialization failed:', error);
+      console.error("[AccessibilityService] Initialization failed:", error);
     }
   }
 
@@ -134,7 +137,7 @@ const AccessibilityService = (() => {
       applyFontScale(newScale);
     }
 
-    ArenaUtils.showToast(`Font size: ${Math.round(_fontScale * 100)}%`, 'info');
+    ArenaUtils.showToast(`Font size: ${Math.round(_fontScale * 100)}%`, "info");
   }
 
   /* ── Theme Management ─────────────────────────────────────── */
@@ -149,7 +152,7 @@ const AccessibilityService = (() => {
     _highContrast = force !== undefined ? force : !_highContrast;
     document.documentElement.setAttribute(
       THEME_DATA_ATTR,
-      _highContrast ? 'high-contrast' : 'dark'
+      _highContrast ? "high-contrast" : "dark",
     );
     ArenaUtils.storage.set(STORAGE_KEYS.highContrast, _highContrast);
   }
@@ -161,7 +164,7 @@ const AccessibilityService = (() => {
    * @param {string} theme - Theme identifier
    */
   function setTheme(theme) {
-    if (theme === 'high-contrast') {
+    if (theme === "high-contrast") {
       toggleHighContrast(true);
       return;
     }
@@ -181,7 +184,10 @@ const AccessibilityService = (() => {
    */
   function toggleReduceMotion(force) {
     _reduceMotion = force !== undefined ? force : !_reduceMotion;
-    document.documentElement.classList.toggle(REDUCE_MOTION_CLASS, _reduceMotion);
+    document.documentElement.classList.toggle(
+      REDUCE_MOTION_CLASS,
+      _reduceMotion,
+    );
     ArenaUtils.storage.set(STORAGE_KEYS.reduceMotion, _reduceMotion);
   }
 
@@ -194,16 +200,16 @@ const AccessibilityService = (() => {
    * - Mouse vs. keyboard detection for focus styling
    */
   function setupKeyboardNav() {
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     // Detect mouse usage to hide focus outlines for mouse users
-    document.addEventListener('mousedown', () => {
+    document.addEventListener("mousedown", () => {
       document.body.classList.add(USING_MOUSE_CLASS);
     });
 
     // Restore focus outlines when keyboard is used
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Tab') {
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Tab") {
         document.body.classList.remove(USING_MOUSE_CLASS);
       }
     });
@@ -215,16 +221,16 @@ const AccessibilityService = (() => {
    */
   function handleKeyDown(event) {
     // Escape closes emergency overlay
-    if (event.key === 'Escape') {
-      const emergency = ArenaUtils.$('#emergency-overlay');
-      if (emergency && emergency.style.display !== 'none') {
-        emergency.style.display = 'none';
+    if (event.key === "Escape") {
+      const emergency = ArenaUtils.$("#emergency-overlay");
+      if (emergency && emergency.style.display !== "none") {
+        emergency.style.display = "none";
         return;
       }
     }
 
     // Tab trap for modal dialogs
-    if (event.key === 'Tab') {
+    if (event.key === "Tab") {
       trapFocusInModal(event);
     }
   }
@@ -235,10 +241,10 @@ const AccessibilityService = (() => {
    */
   function trapFocusInModal(event) {
     const modal = ArenaUtils.$(
-      '.modal-overlay[style*="display: flex"], .modal-overlay:not([style*="display: none"])'
+      '.modal-overlay[style*="display: flex"], .modal-overlay:not([style*="display: none"])',
     );
 
-    if (!modal || modal.style.display === 'none') return;
+    if (!modal || modal.style.display === "none") return;
 
     const focusableElements = modal.querySelectorAll(FOCUSABLE_SELECTOR);
     if (!focusableElements.length) return;
@@ -262,9 +268,9 @@ const AccessibilityService = (() => {
    * Ensures the toast container is properly configured for screen readers.
    */
   function setupLiveRegions() {
-    const toast = ArenaUtils.$('#toast-container');
+    const toast = ArenaUtils.$("#toast-container");
     if (toast) {
-      toast.setAttribute('aria-live', 'polite');
+      toast.setAttribute("aria-live", "polite");
     }
   }
 
@@ -275,10 +281,10 @@ const AccessibilityService = (() => {
    * @param {string} message - Message text to announce
    */
   function announce(message) {
-    const el = document.createElement('div');
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'assertive');
-    el.className = 'sr-only';
+    const el = document.createElement("div");
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "assertive");
+    el.className = "sr-only";
     el.textContent = message;
     document.body.appendChild(el);
 

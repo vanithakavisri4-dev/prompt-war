@@ -4,7 +4,7 @@
  * @module utils
  */
 
-'use strict';
+"use strict";
 
 const ArenaUtils = (() => {
   /**
@@ -29,8 +29,14 @@ const ArenaUtils = (() => {
    * @returns {string} Sanitized string.
    */
   function sanitize(str) {
-    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return String(str).replace(/[&<>"']/g, c => map[c]);
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return String(str).replace(/[&<>"']/g, (c) => map[c]);
   }
 
   /**
@@ -53,8 +59,8 @@ const ArenaUtils = (() => {
    * @returns {string}
    */
   function randomId(len = 8) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
     const arr = new Uint8Array(len);
     crypto.getRandomValues(arr);
     for (let i = 0; i < len; i++) result += chars[arr[i] % chars.length];
@@ -67,7 +73,12 @@ const ArenaUtils = (() => {
    * @returns {string}
    */
   function formatTime(date = new Date()) {
-    return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return date.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   }
 
   /**
@@ -98,17 +109,17 @@ const ArenaUtils = (() => {
    * @param {'info'|'success'|'warning'|'danger'} [type='info']
    * @param {number} [duration=4000]
    */
-  function showToast(message, type = 'info', duration = 4000) {
-    const container = $('#toast-container');
+  function showToast(message, type = "info", duration = 4000) {
+    const container = $("#toast-container");
     if (!container) return;
-    const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', danger: '🚨' };
-    const toast = document.createElement('div');
+    const icons = { info: "ℹ️", success: "✅", warning: "⚠️", danger: "🚨" };
+    const toast = document.createElement("div");
     toast.className = `toast ${type}`;
-    toast.setAttribute('role', 'status');
-    toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${sanitize(message)}</span>`;
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `<span>${sanitize(icons[type] || "ℹ️")}</span><span>${sanitize(message)}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
-      toast.classList.add('removing');
+      toast.classList.add("removing");
       setTimeout(() => toast.remove(), 300);
     }, duration);
   }
@@ -119,14 +130,14 @@ const ArenaUtils = (() => {
    * @returns {boolean}
    */
   function validateForm(form) {
-    const fields = form.querySelectorAll('[required]');
+    const fields = form.querySelectorAll("[required]");
     let valid = true;
-    fields.forEach(f => {
+    fields.forEach((f) => {
       if (!f.value.trim()) {
-        f.style.borderColor = '#ef4444';
+        f.style.borderColor = "#ef4444";
         valid = false;
       } else {
-        f.style.borderColor = '';
+        f.style.borderColor = "";
       }
     });
     return valid;
@@ -137,17 +148,35 @@ const ArenaUtils = (() => {
    */
   const storage = {
     get(key, fallback = null) {
-      try { return JSON.parse(localStorage.getItem(`arenaflow_${key}`)) ?? fallback; }
-      catch { return fallback; }
+      try {
+        return JSON.parse(localStorage.getItem(`arenaflow_${key}`)) ?? fallback;
+      } catch {
+        return fallback;
+      }
     },
     set(key, value) {
-      try { localStorage.setItem(`arenaflow_${key}`, JSON.stringify(value)); }
-      catch { /* quota exceeded */ }
+      try {
+        localStorage.setItem(`arenaflow_${key}`, JSON.stringify(value));
+      } catch {
+        /* quota exceeded */
+      }
     },
     remove(key) {
       localStorage.removeItem(`arenaflow_${key}`);
-    }
+    },
   };
 
-  return { $, $$, sanitize, debounce, randomId, formatTime, clamp, lerp, showToast, validateForm, storage };
+  return {
+    $,
+    $$,
+    sanitize,
+    debounce,
+    randomId,
+    formatTime,
+    clamp,
+    lerp,
+    showToast,
+    validateForm,
+    storage,
+  };
 })();
