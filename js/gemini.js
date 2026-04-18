@@ -47,18 +47,18 @@ const GeminiService = (() => {
    * @returns {Promise<string>} AI response text
    */
     async function chat(userMessage, context = {}) {
-    const safeMessage = String(userMessage).substring(0, 500); // guard length
-    const contextStr = buildContextString(context);
-    if (_apiKey) {
-      try {
-        return await callGeminiAPI(safeMessage, contextStr);
-      } catch (err) {
-        console.warn("Gemini API call failed, using local fallback:", err.message);
-        return localFallback(safeMessage, context);
+      const safeMessage = String(userMessage).substring(0, 500); // guard length
+      const contextStr = buildContextString(context);
+      if (_apiKey) {
+        try {
+          return await callGeminiAPI(safeMessage, contextStr);
+        } catch (err) {
+          console.warn("Gemini API call failed, using local fallback:", err.message);
+          return localFallback(safeMessage, context);
+        }
       }
+      return localFallback(safeMessage, context);
     }
-    return localFallback(safeMessage, context);
-  }
   /**
    * Call the Gemini API.
    * @param {string} message
