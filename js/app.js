@@ -534,12 +534,12 @@ const App = (() => {
       .replace(/\n/g, "<br>");
   }
 
-    function handleCreateGroup() {
-    const name = $("#group-name")?.value?.trim().substring(0, 50); // max 50 chars
-    if (!name) {
-      showToast("Enter a group name", "warning");
-      return;
-    }
+  function handleCreateGroup() {
+  const name = $("#group-name")?.value?.trim().substring(0, 50); // max 50 chars
+  if (!name) {
+    showToast("Enter a group name", "warning");
+    return;
+  }
     // ... rest unchanged
     const code = FirebaseService.createGroup(name, {
       name: _state.user,
@@ -552,12 +552,12 @@ const App = (() => {
     showToast("Group created! Share the code.", "success");
   }
 
-    function handleJoinGroup() {
-    const code = $("#join-code")?.value?.trim().toUpperCase();
-    if (!code || !/^ARENA-[A-Z0-9]{4}$/.test(code)) {
-      showToast("Enter a valid code (e.g. ARENA-X7K2)", "warning");
-      return;
-    }
+  function handleJoinGroup() {
+  const code = $("#join-code")?.value?.trim().toUpperCase();
+  if (!code || !/^ARENA-[A-Z0-9]{4}$/.test(code)) {
+    showToast("Enter a valid code (e.g. ARENA-X7K2)", "warning");
+    return;
+  }
     // ... rest unchanged
     const group = FirebaseService.joinGroup(code, {
       name: _state.user,
