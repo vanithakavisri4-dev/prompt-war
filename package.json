@@ -10,7 +10,7 @@
     "validate": "npx eslint js/ && echo 'All checks passed'",
     "docker:build": "docker build -t arenaflow-ai .",
     "docker:run": "docker run -p 8080:80 arenaflow-ai",
-    "deploy": "gcloud run deploy prompt-war --source . --region us-central1 --allow-unauthenticated --port 80"
+    "deploy": "gcloud run deploy arenaflow-pro --source . --region us-central1 --allow-unauthenticated --port 80"
   },
   "keywords": [
     "arenaflow",
