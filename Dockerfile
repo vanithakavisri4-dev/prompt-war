@@ -22,7 +22,7 @@ COPY css/ /usr/share/nginx/html/css/
 COPY js/ /usr/share/nginx/html/js/
 
 # Copy manifest for PWA support
-COPY manifest.json /usr/share/nginx/html/ 2>/dev/null || true
+COPY manifest.json /usr/share/nginx/html/
 
 # Run as non-root user for security
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
