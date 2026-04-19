@@ -24,12 +24,9 @@ COPY js/ /usr/share/nginx/html/js/
 # Copy manifest for PWA support
 COPY manifest.json /usr/share/nginx/html/
 
-# Run as non-root user for security
+# Run as non-root user for security (workers drop privileges)
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
-
-# Use non-root user
-USER nginx
 
 EXPOSE 80
 
