@@ -113,6 +113,9 @@ const GoogleCloudService = (() => {
       ANALYTICS_FLUSH_INTERVAL_MS,
     );
 
+    // Collect Core Web Vitals via PerformanceObserver
+    _collectWebVitals();
+
     log(Severity.INFO, "GoogleCloudService initialized", {
       environment: _config.isCloudRun ? "cloud-run" : "local",
       projectId: _config.projectId,
@@ -127,6 +130,62 @@ const GoogleCloudService = (() => {
         "analytics-4",
       ],
     });
+
+    // Mark app initialization complete for performance timing
+    if (typeof performance !== "undefined" && performance.mark) {
+      performance.mark("arenaflow:init-complete");
+    }
+  }
+
+  /**
+   * Collect Core Web Vitals (LCP, FID, CLS, INP) via PerformanceObserver.
+   * Results are stored in _config for Cloud Monitoring reporting.
+   * @private
+   * @see https://web.dev/vitals/
+   */
+  function _collectWebVitals() {
+    if (typeof PerformanceObserver === "undefined") return;
+
+    // Largest Contentful Paint (LCP)
+    try {
+      const lcpObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const lcp = entries[entries.length - 1];
+        _config.lcp = Math.round(lcp.startTime);
+        log(Severity.DEBUG, "Core Web Vital: LCP", { value: _config.lcp });
+      });
+      lcpObserver.observe({ type: "largest-contentful-paint", buffered: true });
+    } catch {
+      /* LCP not supported */
+    }
+
+    // Cumulative Layout Shift (CLS)
+    try {
+      let clsValue = 0;
+      const clsObserver = new PerformanceObserver((list) => {
+        list.getEntries().forEach((entry) => {
+          if (!entry.hadRecentInput) {
+            clsValue += entry.value;
+          }
+        });
+        _config.cls = Math.round(clsValue * 1000) / 1000;
+      });
+      clsObserver.observe({ type: "layout-shift", buffered: true });
+    } catch {
+      /* CLS not supported */
+    }
+
+    // First Input Delay (FID)
+    try {
+      const fidObserver = new PerformanceObserver((list) => {
+        const entry = list.getEntries()[0];
+        _config.fid = Math.round(entry.processingStart - entry.startTime);
+        log(Severity.DEBUG, "Core Web Vital: FID", { value: _config.fid });
+      });
+      fidObserver.observe({ type: "first-input", buffered: true });
+    } catch {
+      /* FID not supported */
+    }
   }
 
   /**
@@ -454,17 +513,33 @@ const GoogleCloudService = (() => {
       resourceCount: perf.getEntriesByType("resource").length,
       activeZones:
         typeof CrowdEngine !== "undefined" ? CrowdEngine.ZONES?.length || 0 : 0,
+      // Core Web Vitals (collected via PerformanceObserver)
+      lcp: _config.lcp || null,
+      cls: _config.cls || null,
+      fid: _config.fid || null,
     };
 
     paint.forEach((entry) => {
-      if (entry.name === "first-paint")
+      if (entry.name === "first-paint") {
         metrics.firstPaint = Math.round(entry.startTime);
-      if (entry.name === "first-contentful-paint")
+      }
+      if (entry.name === "first-contentful-paint") {
         metrics.firstContentfulPaint = Math.round(entry.startTime);
+      }
     });
 
     if (perf.memory) {
       metrics.memoryUsedMB = Math.round(perf.memory.usedJSHeapSize / 1048576);
+    }
+
+    // Custom marks timing
+    try {
+      const initMark = perf.getEntriesByName("arenaflow:init-complete")[0];
+      if (initMark) {
+        metrics.initTime = Math.round(initMark.startTime);
+      }
+    } catch {
+      /* marks not available */
     }
 
     return metrics;

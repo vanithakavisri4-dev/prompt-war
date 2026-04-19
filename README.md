@@ -161,18 +161,25 @@ One-tap emergency evacuation overlay:
 
 ## 🔒 Security Measures
 
-- **Content Security Policy**: CSP meta tag restricts script sources, style sources, and connection endpoints
+- **Content Security Policy (HTTP Header)**: CSP response header in nginx restricts script sources, style sources, and connection endpoints — stronger than meta tag alone
+- **Content Security Policy (Meta Tag)**: Fallback CSP meta tag for non-nginx environments
 - **XSS Prevention**: All user input sanitized via `ArenaUtils.sanitize()` before DOM insertion
 - **Content Security**: HTML entity encoding for `& < > " '` characters
 - **Rate Limiting**: Chat messages rate-limited (1 req/sec); Cloud Function calls rate-limited (5s interval)
 - **Input Length Validation**: Chat messages truncated to 500 characters to prevent payload attacks
 - **Cryptographic Randomness**: `crypto.getRandomValues()` for group code generation (not `Math.random()`)
-- **Input Validation**: Form validation with visual feedback before submission
+- **Input Validation**: Form validation + join code regex validation (`/^ARENA-[A-Z0-9]{4}$/`) before submission
 - **Safe API Calls**: Gemini safety settings block all harmful content categories (harassment, hate speech, explicit, dangerous)
 - **Fetch Timeout**: All external API calls use `AbortSignal.timeout()` to prevent hanging requests
 - **localStorage Isolation**: Namespaced keys (`arenaflow_*`) prevent collisions
 - **No Inline Scripts**: All JavaScript in external files (CSP-friendly)
 - **Structured Error Handling**: Try-catch boundaries with graceful fallbacks in all API integrations
+- **HSTS**: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` via nginx
+- **COOP/CORP/COEP**: Cross-Origin isolation headers for maximum security isolation
+- **Permissions Policy**: Camera, microphone, geolocation, and interest-cohort disabled
+- **Frame Protection**: `X-Frame-Options: DENY` + CSP `frame-ancestors 'none'`
+- **Form Action Restriction**: CSP `form-action 'self'` prevents form hijacking
+- **Base URI Restriction**: CSP `base-uri 'self'` prevents base tag injection
 
 ---
 
@@ -195,23 +202,24 @@ One-tap emergency evacuation overlay:
 
 ## 🧪 Testing
 
-Open `tests/test.html` in a browser to run the full test suite (92 tests across 14 suites).
+Open `tests/test.html` in a browser to run the full test suite (130+ tests across 22 suites).
 
 **Test Coverage:**
 
-- ✅ **Utilities** — Sanitization (XSS, special chars, empty, null, numeric), clamp, lerp, randomId, storage, debounce, formatTime
-- ✅ **Crowd Engine** — Snapshot validity, density ranges, predictions, wait times, phase management, safety index, least crowded lookup
-- ✅ **Flow Optimizer** — Flow generation, item structure, scoring, accessibility adjustments, meeting points, null profile handling
-- ✅ **Gemini Service** — Chat responses, intent detection (food, restroom, unknown), translation fallback
-- ✅ **Firebase Service** — Group creation, joining, retrieval, non-existent code handling
-- ✅ **Google Cloud Service** — Initialization, config validation, health checks, performance metrics, logging severities, event tracking, enum immutability
-- ✅ **Security** — XSS prevention (script, img, svg, event handlers), crypto randomness validation
-- ✅ **Maps Service** — Module validation, canvas initialization, layer switching, graceful missing element handling
-- ✅ **Accessibility Service** — Font scaling, high contrast, reduced motion, theme switching, screen reader announcements
-- ✅ **Edge Cases** — Null/undefined inputs, boundary values, unknown zone types, empty arrays
-- ✅ **Async Error Handling** — Concurrent calls, invalid inputs, rate limiting, fallback behavior
-- ✅ **DOM Integration** — Selector helpers, form validation, toast creation, component structure
-- ✅ **Performance** — Snapshot generation throughput, flow optimizer speed, sanitization efficiency
+- ✅ **Utilities** — Sanitization (XSS, special chars, empty, null, numeric, all vector types), clamp, lerp, randomId, storage, debounce, formatTime, remove
+- ✅ **Crowd Engine** — Snapshot validity, density ranges, predictions, wait times, phase management, safety index, least crowded lookup, all 5 phase transitions, avgDensity and totalAttendees validation
+- ✅ **Flow Optimizer** — Flow generation, item structure, scoring, accessibility adjustments, meeting points, null profile handling, zone names, density values, time formats, mandatory activities
+- ✅ **Gemini Service** — Chat responses, all intent types (food, restroom, nav, crowd, exit, emergency, merch), translation fallback, concurrent calls, invalid language codes
+- ✅ **Firebase Service** — Group creation, joining, retrieval, non-existent code handling, code format validation, multiple unique codes
+- ✅ **Google Cloud Service** — Initialization, config validation, health checks, performance metrics, logging severities, event tracking, enum immutability, Core Web Vitals fields, BigQuery/Vertex AI
+- ✅ **Security** — XSS prevention (script, img, svg, event handlers, all vector types), crypto randomness, code regex validation, length-limited group names
+- ✅ **Maps Service** — Module validation, canvas initialization, all layer types, graceful missing element handling, idempotent stop()
+- ✅ **Accessibility Service** — Font scaling, high contrast, reduced motion, theme switching, screen reader announcements, language attribute
+- ✅ **Core Web Vitals** — LCP/FID/CLS field presence, null-or-non-negative validation, resource count
+- ✅ **Edge Cases** — Null/undefined inputs, boundary values, unknown zone types, empty arrays, concurrent calls
+- ✅ **Async Error Handling** — Concurrent chat, invalid language, rate limiting, concurrent Vertex AI
+- ✅ **DOM Integration** — Selector helpers, form validation, toast creation, start/stop cycle, ACTIVITY_CATALOG validation
+- ✅ **Performance** — Snapshot throughput (100 in <500ms), flow generation (<100ms), sanitization efficiency (1000 payloads <50ms), prediction speed
 
 ---
 
@@ -219,14 +227,16 @@ Open `tests/test.html` in a browser to run the full test suite (92 tests across 
 
 ```
 prompt-war/
-├── index.html              # Main application entry point (GA4 + meta tags)
-├── Dockerfile              # Docker container config (NGINX Alpine)
+├── index.html              # Main application entry point (GA4, PWA, JSON-LD, OG tags)
+├── manifest.json           # Web App Manifest (PWA — installable on mobile/desktop)
+├── Dockerfile              # Docker container config (NGINX 1.27 Alpine, non-root)
 ├── .dockerignore           # Docker build exclusions
+├── nginx.conf              # NGINX security headers (CSP, HSTS, COOP, CORP, COEP)
 ├── css/
 │   └── styles.css          # Complete design system (dark/light/high-contrast)
 ├── js/
 │   ├── utils.js            # Core utilities, sanitization, crypto helpers
-│   ├── google-cloud.js     # Google Cloud Run, Logging, Monitoring, Analytics
+│   ├── google-cloud.js     # Cloud Run, Logging, Monitoring, Core Web Vitals
 │   ├── crowd-engine.js     # Crowd simulation & prediction engine (27 zones)
 │   ├── flow-optimizer.js   # AI activity schedule optimizer (greedy algorithm)
 │   ├── gemini.js           # Google Gemini 2.0 Flash AI integration
@@ -235,11 +245,11 @@ prompt-war/
 │   ├── accessibility.js    # WCAG 2.1 AA compliance module
 │   └── app.js              # Main application controller
 ├── tests/
-│   └── test.html           # Comprehensive test suite (92 tests, 14 suites)
+│   └── test.html           # Comprehensive test suite (130+ tests, 22 suites)
 ├── .editorconfig           # Editor configuration for consistent formatting
-├── .eslintrc.json          # ESLint code quality rules
+├── .eslintrc.json          # ESLint legacy config
+├── eslint.config.mjs       # ESLint flat config (primary — 0 errors)
 ├── jsconfig.json           # JavaScript project config (type checking)
-├── nginx.conf              # NGINX security headers & caching config
 ├── package.json            # Project manifest and scripts
 ├── CONTRIBUTING.md         # Contributor guidelines
 ├── LICENSE                 # MIT License

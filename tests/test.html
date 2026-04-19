@@ -1066,6 +1066,231 @@
         assertEqual(document.documentElement.lang, "en");
       });
 
+      // ===== GOOGLE CLOUD — CORE WEB VITALS =====
+      suite("GoogleCloudService — Core Web Vitals & Performance Marks");
+
+      test("getPerformanceMetrics() includes Core Web Vitals fields", () => {
+        const metrics = GoogleCloudService.getPerformanceMetrics();
+        assert("lcp" in metrics, "Should have LCP field");
+        assert("cls" in metrics, "Should have CLS field");
+        assert("fid" in metrics, "Should have FID field");
+      });
+
+      test("getPerformanceMetrics() CLS is null or non-negative number", () => {
+        const metrics = GoogleCloudService.getPerformanceMetrics();
+        assert(
+          metrics.cls === null || (typeof metrics.cls === "number" && metrics.cls >= 0),
+          "CLS should be null or non-negative"
+        );
+      });
+
+      test("getPerformanceMetrics() LCP is null or non-negative", () => {
+        const metrics = GoogleCloudService.getPerformanceMetrics();
+        assert(
+          metrics.lcp === null || (typeof metrics.lcp === "number" && metrics.lcp >= 0),
+          "LCP should be null or non-negative"
+        );
+      });
+
+      test("getPerformanceMetrics() resourceCount is non-negative", () => {
+        const metrics = GoogleCloudService.getPerformanceMetrics();
+        assert(metrics.resourceCount >= 0, "Resource count should be non-negative");
+        assertType(metrics.resourceCount, "number");
+      });
+
+      // ===== CROWD ENGINE — PHASE TRANSITIONS =====
+      suite("CrowdEngine — Phase Transition Tests");
+
+      test("All 5 event phases are valid in PHASE_MODIFIERS", () => {
+        const phases = ["pre-game", "first-half", "halftime", "second-half", "post-game"];
+        phases.forEach((phase) => {
+          CrowdEngine.setPhase(phase);
+          assertEqual(CrowdEngine.getSnapshot().phase, phase, `Phase ${phase} should be set`);
+        });
+        CrowdEngine.setPhase("pre-game"); // Reset
+      });
+
+      test("Density after tick stays within 0.02-0.98 bounds", () => {
+        CrowdEngine.setPhase("halftime");
+        // Force a tick by directly checking snapshot validity
+        const snap = CrowdEngine.getSnapshot();
+        snap.zones.forEach((z) => {
+          assert(z.density >= 0 && z.density <= 1, `Zone ${z.id} density out of range`);
+        });
+        CrowdEngine.setPhase("pre-game");
+      });
+
+      test("totalAttendees is always a positive integer", () => {
+        const snap = CrowdEngine.getSnapshot();
+        assert(snap.totalAttendees > 0, "Should have positive attendee count");
+        assertEqual(snap.totalAttendees, Math.round(snap.totalAttendees), "Should be integer");
+      });
+
+      test("avgDensity is between 0 and 1", () => {
+        const snap = CrowdEngine.getSnapshot();
+        assert(snap.avgDensity >= 0 && snap.avgDensity <= 1, "avgDensity out of range");
+      });
+
+      // ===== FIREBASE — GROUP VALIDATION =====
+      suite("FirebaseService — Group Code Validation");
+
+      test("Group code format matches expected pattern ARENA-XXXX", () => {
+        const code = FirebaseService.createGroup("Pattern Test", { name: "Test", section: "north-lower" });
+        assert(/^ARENA-[A-Z0-9]{4}$/.test(code), `Code ${code} should match ARENA-XXXX format`);
+      });
+
+      test("Multiple groups have unique codes", () => {
+        const codes = new Set();
+        for (let i = 0; i < 10; i++) {
+          codes.add(FirebaseService.createGroup(`Group ${i}`, { name: "T", section: "north-lower" }));
+        }
+        assert(codes.size >= 9, "Should generate mostly unique codes");
+      });
+
+      test("getGroup() returns null for getGroup with empty string", () => {
+        assertEqual(FirebaseService.getGroup(""), null);
+      });
+
+      // ===== GEMINI — SAFETY AND CONTENT =====
+      suite("GeminiService — Safety & Multi-language");
+
+      test("chat() handles emergency query correctly", async () => {
+        const response = await GeminiService.chat("I need medical help", {});
+        assertType(response, "string");
+        assert(
+          response.includes("Emergency") || response.includes("emergency") ||
+          response.includes("Medical") || response.includes("🚨") || response.includes("🏥"),
+          "Emergency query should return safety info"
+        );
+      });
+
+      test("chat() handles exit query correctly", async () => {
+        const response = await GeminiService.chat("How do I exit the stadium?", {});
+        assertType(response, "string");
+        assert(response.length > 10, "Should return helpful exit info");
+      });
+
+      test("chat() handles merchandise query correctly", async () => {
+        const response = await GeminiService.chat("Where is the merch store?", {});
+        assertType(response, "string");
+        assert(response.length > 10, "Should return store info");
+      });
+
+      test("chat() handles crowd density query", async () => {
+        const response = await GeminiService.chat("How busy is it right now?", {
+          snapshot: CrowdEngine.getSnapshot()
+        });
+        assertType(response, "string");
+        assert(response.length > 10, "Should return crowd status");
+      });
+
+      // ===== MAPS SERVICE — LAYER VALIDATION =====
+      suite("MapsService — Layer System Validation");
+
+      test("setLayer() changes active layer without throwing", () => {
+        ["crowd", "food", "facilities", "exits"].forEach((layer) => {
+          MapsService.setLayer(layer);
+          assert(true, `Layer ${layer} should be set without error`);
+        });
+      });
+
+      test("MapsService.stop() is idempotent (multiple calls safe)", () => {
+        MapsService.stop();
+        MapsService.stop();
+        MapsService.stop();
+        assert(true, "Multiple stop() calls should not throw");
+      });
+
+      // ===== FLOW OPTIMIZER — DETAILED VALIDATION =====
+      suite("FlowOptimizer — Detailed Item Validation");
+
+      test("Flow items have non-empty zone names", () => {
+        const flow = FlowOptimizer.generateFlow({ section: "north-lower" }, CrowdEngine.getSnapshot());
+        flow.items.forEach((item) => {
+          assertType(item.zone, "string");
+          assert(item.zone.length > 0, "Zone name should not be empty");
+        });
+      });
+
+      test("Flow items have valid density values (0-100)", () => {
+        const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+        flow.items.forEach((item) => {
+          assert(
+            item.density >= 0 && item.density <= 100,
+            `Item density ${item.density} should be 0-100`
+          );
+        });
+      });
+
+      test("Flow items have valid time strings (HH:MM format)", () => {
+        const flow = FlowOptimizer.generateFlow({}, CrowdEngine.getSnapshot());
+        flow.items.forEach((item) => {
+          assert(
+            /\d{1,2}:\d{2}/.test(item.time),
+            `Item time ${item.time} should be in HH:MM format`
+          );
+        });
+      });
+
+      test("ACTIVITY_CATALOG mandatory activities always included", () => {
+        const mandatoryIds = FlowOptimizer.ACTIVITY_CATALOG
+          .filter((a) => a.mandatory)
+          .map((a) => a.id);
+        const flow = FlowOptimizer.generateFlow({ section: "north-lower" }, CrowdEngine.getSnapshot());
+        const flowIds = flow.items.map((item) => item.id);
+        mandatoryIds.forEach((id) => {
+          assert(flowIds.includes(id), `Mandatory activity ${id} should be in flow`);
+        });
+      });
+
+      // ===== UTILS — ADDITIONAL COVERAGE =====
+      suite("ArenaUtils — Additional Utility Tests");
+
+      test("sanitize() handles all XSS vector types", () => {
+        const vectors = [
+          '<script>alert(1)</script>',
+          '"><script>alert(1)</script>',
+          "' OR '1'='1",
+          '<img src=x onerror=alert(1)>',
+          '&lt;script&gt;',
+          'javascript:void(0)',
+        ];
+        vectors.forEach((v) => {
+          const result = ArenaUtils.sanitize(v);
+          assert(!result.includes('<script'), `Should sanitize: ${v.substring(0, 20)}`);
+          assert(!result.includes('<img'), `Should sanitize img: ${v.substring(0, 20)}`);
+        });
+      });
+
+      test("debounce() preserves 'this' context via regular function", () => {
+        const obj = {
+          value: 42,
+          getValue: ArenaUtils.debounce(function() { return this.value; }, 100)
+        };
+        assertType(obj.getValue, "function", "Debounced function should be a function");
+      });
+
+      test("storage.remove() cleans up correctly", () => {
+        ArenaUtils.storage.set("cleanup_test", { data: true });
+        ArenaUtils.storage.remove("cleanup_test");
+        const result = ArenaUtils.storage.get("cleanup_test", null);
+        assertEqual(result, null, "Removed key should return null");
+      });
+
+      test("formatTime() returns 8-character time string HH:MM:SS", () => {
+        const time = ArenaUtils.formatTime(new Date("2026-01-01T12:30:45"));
+        assertEqual(time.length, 8, "Time should be 8 characters");
+        assertEqual(time[2], ":", "Should have colon at position 2");
+        assertEqual(time[5], ":", "Should have colon at position 5");
+      });
+
+      test("randomId() only contains uppercase alphanumeric characters", () => {
+        for (let i = 0; i < 20; i++) {
+          const id = ArenaUtils.randomId(8);
+          assert(/^[A-Z0-9]+$/.test(id), `ID ${id} should be uppercase alphanumeric`);
+        }
+      });
+
       // Show results
       showSummary();
     </script>

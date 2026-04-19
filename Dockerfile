@@ -1,4 +1,14 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine
+
+# Add security labels
+LABEL maintainer="ArenaFlow AI Team" \
+      version="2.0.0" \
+      description="ArenaFlow AI — Predictive Stadium Experience Orchestrator" \
+      org.opencontainers.image.title="ArenaFlow AI" \
+      org.opencontainers.image.description="AI-powered crowd flow optimization" \
+      org.opencontainers.image.vendor="ArenaFlow AI Team" \
+      org.opencontainers.image.version="2.0.0" \
+      org.opencontainers.image.licenses="MIT"
 
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
@@ -11,8 +21,15 @@ COPY index.html /usr/share/nginx/html/
 COPY css/ /usr/share/nginx/html/css/
 COPY js/ /usr/share/nginx/html/js/
 
+# Copy manifest for PWA support
+COPY manifest.json /usr/share/nginx/html/ 2>/dev/null || true
+
 # Run as non-root user for security
-RUN chown -R nginx:nginx /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Use non-root user
+USER nginx
 
 EXPOSE 80
 

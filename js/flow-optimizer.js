@@ -141,8 +141,9 @@ const FlowOptimizer = (() => {
     const assignments = [];
 
     scoredAssignments.forEach((sa) => {
-      if (usedSlots.has(sa.slotIdx) || usedActivities.has(sa.activity.id))
+      if (usedSlots.has(sa.slotIdx) || usedActivities.has(sa.activity.id)) {
         return;
+      }
       usedSlots.add(sa.slotIdx);
       usedActivities.add(sa.activity.id);
       assignments.push(sa);

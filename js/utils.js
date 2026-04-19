@@ -4,9 +4,8 @@
  * @module utils
  */
 
-"use strict";
-
 const ArenaUtils = (() => {
+  "use strict";
   /**
    * Safely query a DOM element by selector.
    * @param {string} sel - CSS selector.
