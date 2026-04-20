@@ -8,12 +8,26 @@
 // eslint-disable-next-line no-unused-vars
 const GeminiService = (() => {
   "use strict";
-  // Gemini API configuration
-  // In production, this would be set via environment variable or secure config
-  let _apiKey = "";
+  /* ── Constants ─────────────────────────────────────────────── */
+
+  /** Maximum allowed input message length. */
+  const MAX_MESSAGE_LENGTH = 500;
+
+  /** Gemini model identifier. */
   const GEMINI_MODEL = "gemini-2.0-flash";
+
+  /** Gemini REST API base endpoint. */
   const GEMINI_ENDPOINT =
     "https://generativelanguage.googleapis.com/v1beta/models";
+
+  /* ── State ─────────────────────────────────────────────────── */
+
+  /**
+   * Gemini API key.
+   * In production, this would be set via environment variable or secure config.
+   * @type {string}
+   */
+  let _apiKey = "";
 
   /**
    * System prompt that defines the AI concierge persona.
@@ -40,30 +54,38 @@ const GeminiService = (() => {
     _apiKey = key;
   }
 
+  /* ── Public API ───────────────────────────────────────────── */
+
   /**
    * Send a message to Gemini and get a response.
+   * Falls back to local pattern matching when the API is unavailable.
    * @param {string} userMessage - User's chat message
-   * @param {object} context - Current venue/crowd context
+   * @param {object} [context={}] - Current venue/crowd context
    * @returns {Promise<string>} AI response text
    */
-    async function chat(userMessage, context = {}) {
-      const safeMessage = String(userMessage).substring(0, 500); // guard length
-      const contextStr = buildContextString(context);
-      if (_apiKey) {
-        try {
-          return await callGeminiAPI(safeMessage, contextStr);
-        } catch (err) {
-          console.warn("Gemini API call failed, using local fallback:", err.message);
-          return localFallback(safeMessage, context);
-        }
+  async function chat(userMessage, context = {}) {
+    const safeMessage = String(userMessage).substring(0, MAX_MESSAGE_LENGTH);
+    const contextStr = buildContextString(context);
+
+    if (_apiKey) {
+      try {
+        return await callGeminiAPI(safeMessage, contextStr);
+      } catch (err) {
+        console.warn("Gemini API call failed, using local fallback:", err.message);
+        return localFallback(safeMessage, context);
       }
-      return localFallback(safeMessage, context);
     }
+
+    return localFallback(safeMessage, context);
+  }
+
+  /* ── API Integration ─────────────────────────────────────── */
   /**
-   * Call the Gemini API.
-   * @param {string} message
-   * @param {string} contextStr
-   * @returns {Promise<string>}
+   * Call the Gemini REST API with safety settings and generation config.
+   * @param {string} message - Sanitized user message
+   * @param {string} contextStr - Formatted venue context string
+   * @returns {Promise<string>} Generated response text
+   * @throws {Error} If API returns non-200 or empty response
    */
   async function callGeminiAPI(message, contextStr) {
     const url = `${GEMINI_ENDPOINT}/${GEMINI_MODEL}:generateContent?key=${_apiKey}`;
@@ -120,9 +142,10 @@ const GeminiService = (() => {
   }
 
   /**
-   * Build a context string from current crowd/venue data.
-   * @param {object} ctx
-   * @returns {string}
+   * Build a human-readable context string from current crowd/venue data.
+   * Used to provide real-time context to the AI model.
+   * @param {object} ctx - Context object with snapshot, userSection, accessibility
+   * @returns {string} Formatted multi-line context string
    */
   function buildContextString(ctx) {
     if (!ctx.snapshot) return "No live data available.";
@@ -145,10 +168,11 @@ const GeminiService = (() => {
 
   /**
    * Smart local fallback when Gemini API is not available.
-   * Pattern-matches user intent and provides contextual responses.
-   * @param {string} message
-   * @param {object} context
-   * @returns {string}
+   * Pattern-matches user intent and provides contextual responses
+   * using live crowd data from CrowdEngine.
+   * @param {string} message - Lowercase user message to match patterns against
+   * @param {object} context - Context with snapshot, userSection, accessibility
+   * @returns {string} Formatted response with emoji and markdown
    */
   function localFallback(message, context) {
     const msg = message.toLowerCase();
@@ -251,10 +275,11 @@ const GeminiService = (() => {
 
   /**
    * Translate text using Google Cloud Translation API.
-   * Falls back to returning original text if API unavailable.
-   * @param {string} text
-   * @param {string} targetLang
-   * @returns {Promise<string>}
+   * Falls back to returning original text if API is unavailable
+   * or language code is invalid.
+   * @param {string} text - Text to translate
+   * @param {string} [targetLang='en'] - ISO 639-1 language code
+   * @returns {Promise<string>} Translated text or original on failure
    */
   async function translate(text, targetLang = "en") {
     if (targetLang === "en" || !_apiKey) return text;

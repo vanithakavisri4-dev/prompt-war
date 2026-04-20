@@ -552,19 +552,19 @@ const GoogleCloudService = (() => {
    * @returns {object} Health status with per-module checks
    */
   function healthCheck() {
-  const checks = {
-    crowdEngine: typeof CrowdEngine !== "undefined" ? "ok" : "unavailable",
-    geminiService:
-      typeof GeminiService !== "undefined" ? "ok" : "unavailable",
-    firebaseService:
-      typeof FirebaseService !== "undefined" ? "ok" : "unavailable",
-    flowOptimizer:
-      typeof FlowOptimizer !== "undefined" ? "ok" : "unavailable",
-    mapsService: typeof MapsService !== "undefined" ? "ok" : "unavailable",
-    accessibilityService:
-      typeof AccessibilityService !== "undefined" ? "ok" : "unavailable",
-    googleCloudService: "ok",
-  };
+    const checks = {
+      crowdEngine: typeof CrowdEngine !== "undefined" ? "ok" : "unavailable",
+      geminiService:
+        typeof GeminiService !== "undefined" ? "ok" : "unavailable",
+      firebaseService:
+        typeof FirebaseService !== "undefined" ? "ok" : "unavailable",
+      flowOptimizer:
+        typeof FlowOptimizer !== "undefined" ? "ok" : "unavailable",
+      mapsService: typeof MapsService !== "undefined" ? "ok" : "unavailable",
+      accessibilityService:
+        typeof AccessibilityService !== "undefined" ? "ok" : "unavailable",
+      googleCloudService: "ok",
+    };
     const allHealthy = Object.values(checks).every((v) => v === "ok");
 
     const status = {

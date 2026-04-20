@@ -9,6 +9,23 @@
 // eslint-disable-next-line no-unused-vars
 const FlowOptimizer = (() => {
   "use strict";
+
+  /* ── Constants ─────────────────────────────────────────────── */
+
+  /** Number of optional activities to include in each flow. */
+  const OPTIONAL_ACTIVITY_COUNT = 3;
+
+  /** Duration multiplier for wheelchair accessibility. */
+  const WHEELCHAIR_DURATION_FACTOR = 1.3;
+
+  /** Duration multiplier for elderly/reduced mobility. */
+  const ELDERLY_DURATION_FACTOR = 1.2;
+
+  /** Time slot interval in minutes between activities. */
+  const SLOT_INTERVAL_MINUTES = 20;
+
+  /** Minimum number of time slots to generate. */
+  const MIN_SLOT_COUNT = 8;
   /**
    * Activity templates with base durations and priorities.
    */
@@ -197,44 +214,47 @@ const FlowOptimizer = (() => {
   }
 
   /**
-   * Select activities based on user profile.
-   * @param {object} profile
-   * @returns {Array}
+   * Select activities based on user profile and accessibility needs.
+   * Creates copies of catalog items to avoid mutating shared data.
+   * @param {object} profile - User profile with accessibility preferences
+   * @returns {Array<object>} Selected and adjusted activities
    */
   function selectActivities(profile) {
-    let selected = ACTIVITY_CATALOG.filter((a) => a.mandatory);
-    const optional = ACTIVITY_CATALOG.filter((a) => !a.mandatory);
+    const mandatory = ACTIVITY_CATALOG.filter((a) => a.mandatory).map((a) => ({ ...a }));
+    const optional = ACTIVITY_CATALOG.filter((a) => !a.mandatory).map((a) => ({ ...a }));
 
-    // Pick 3-4 optional activities
+    // Shuffle and pick optional activities
     const shuffled = optional.sort(() => Math.random() - 0.5);
-    selected = selected.concat(shuffled.slice(0, 3));
+    const selected = mandatory.concat(shuffled.slice(0, OPTIONAL_ACTIVITY_COUNT));
 
-    // Accessibility adjustments
+    // Apply accessibility duration adjustments to copies (not originals)
     if (profile && profile.accessibility === "wheelchair") {
       selected.forEach((a) => {
-        a.baseDuration = Math.round(a.baseDuration * 1.3);
+        a.baseDuration = Math.round(a.baseDuration * WHEELCHAIR_DURATION_FACTOR);
       });
     }
     if (profile && profile.accessibility === "elderly") {
       selected.forEach((a) => {
-        a.baseDuration = Math.round(a.baseDuration * 1.2);
+        a.baseDuration = Math.round(a.baseDuration * ELDERLY_DURATION_FACTOR);
       });
     }
 
     return selected.sort((a, b) => a.priority - b.priority);
   }
 
+  /* ── Time Slot Generation ────────────────────────────────── */
+
   /**
-   * Generate evenly spaced time slots starting from now.
-   * @param {Date} start
-   * @param {number} count
-   * @returns {Date[]}
+   * Generate evenly spaced time slots starting from a given time.
+   * @param {Date} start - Start time for first slot
+   * @param {number} count - Minimum number of activity slots needed
+   * @returns {Date[]} Array of time slot Date objects
    */
   function generateTimeSlots(start, count) {
     const slots = [];
-    const interval = 20; // minutes between slots
-    for (let i = 0; i < Math.max(count + 2, 8); i++) {
-      slots.push(new Date(start.getTime() + i * interval * 60000));
+    const totalSlots = Math.max(count + 2, MIN_SLOT_COUNT);
+    for (let i = 0; i < totalSlots; i++) {
+      slots.push(new Date(start.getTime() + i * SLOT_INTERVAL_MINUTES * 60000));
     }
     return slots;
   }
@@ -254,6 +274,8 @@ const FlowOptimizer = (() => {
       zones[0],
     );
   }
+
+  /* ── Group Meeting ──────────────────────────────────────── */
 
   /**
    * Find optimal meeting point for a group of users in different sections.

@@ -36,8 +36,41 @@ const App = (() => {
   /** Delay for simulated chat injection. */
   const SIMULATED_CHAT_DELAY_MS = 300;
 
-  /** Maximum wait time for food calculation. */
+  /** Maximum wait time for food calculation (minutes). */
   const MAX_WAIT_MINUTES = 15;
+
+  /** Heatmap canvas maximum width (px). */
+  const HEATMAP_MAX_WIDTH = 700;
+
+  /** Heatmap canvas height (px). */
+  const HEATMAP_HEIGHT = 400;
+
+  /** Minimum parent width before using fallback (px). */
+  const HEATMAP_MIN_PARENT_WIDTH = 60;
+
+  /** Fallback heatmap width when parent is too narrow (px). */
+  const HEATMAP_FALLBACK_WIDTH = 650;
+
+  /** Parent padding offset for heatmap sizing (px). */
+  const HEATMAP_PARENT_PADDING = 48;
+
+  /** Crowd density threshold for trend direction. */
+  const CROWD_TREND_THRESHOLD = 60;
+
+  /** Maximum group name length. */
+  const MAX_GROUP_NAME_LENGTH = 50;
+
+  /** Heatmap zone density threshold for "high" (red). */
+  const DENSITY_THRESHOLD_HIGH = 0.8;
+
+  /** Heatmap zone density threshold for "medium" (yellow). */
+  const DENSITY_THRESHOLD_MEDIUM = 0.6;
+
+  /** Base blob radius for heatmap density circles (px). */
+  const BLOB_RADIUS_BASE = 15;
+
+  /** Additional blob radius scale per density unit (px). */
+  const BLOB_RADIUS_SCALE = 30;
 
   /** View name mapping for navigation titles. */
   const VIEW_TITLES = Object.freeze({
@@ -84,27 +117,38 @@ const App = (() => {
    */
   function init() {
     try {
+      // Delay the initial load to show the splash screen smoothly
       setTimeout(() => {
         const loader = $("#loading-screen");
         if (loader) {
           loader.style.opacity = "0";
+          // Wait for CSS fade transition to finish before hiding completely
           setTimeout(() => (loader.style.display = "none"), LOADING_FADE_MS);
         }
+
+        // Check if user session already exists in local storage
         const saved = storage.get("user");
         if (saved) {
           _state = { ..._state, ...saved };
-          showApp();
+          showApp(); // Bypass onboarding
         } else {
-          $("#onboarding-modal").style.display = "flex";
+          $("#onboarding-modal").style.display = "flex"; // Show onboarding
         }
       }, LOADING_SCREEN_DURATION_MS);
+
+      // Bind all UI event listeners immediately
       bindEvents();
+      // Initialize WCAG 2.1 AA accessibility features
       AccessibilityService.init();
     } catch (error) {
       console.error("[App] Initialization failed:", error);
     }
   }
 
+  /**
+   * Bind all UI event listeners for navigation, forms, and interactive controls.
+   * Delegates to named handler functions for testability and readability.
+   */
   function bindEvents() {
     // Onboarding
     $("#onboarding-form")?.addEventListener("submit", (e) => {
@@ -179,20 +223,16 @@ const App = (() => {
     $("#setting-font-scale")?.addEventListener("input", (e) =>
       AccessibilityService.applyFontScale(e.target.value / 100),
     );
-    $("#setting-reduce-motion")?.addEventListener("change", (e) =>
-      AccessibilityService.toggleReduceMotion(e.target.checked),
-    );
-    // Accessibility buttons
-        // After the existing setting-reduce-motion listener, add:
+    $("#setting-reduce-motion")?.addEventListener("change", (e) => {
+      e.target.setAttribute("aria-checked", e.target.checked ? "true" : "false");
+      AccessibilityService.toggleReduceMotion(e.target.checked);
+    });
+    // Toggle aria-checked on switch-role checkboxes
     ["setting-notifications", "setting-haptics"].forEach((id) => {
       const el = $(`#${id}`);
       el?.addEventListener("change", () => {
         el.setAttribute("aria-checked", el.checked ? "true" : "false");
       });
-    });
-    $("#setting-reduce-motion")?.addEventListener("change", (e) => {
-      e.target.setAttribute("aria-checked", e.target.checked ? "true" : "false");
-      AccessibilityService.toggleReduceMotion(e.target.checked);
     });
     $("#btn-high-contrast")?.addEventListener("click", () =>
       AccessibilityService.toggleHighContrast(),
@@ -207,22 +247,34 @@ const App = (() => {
     }, CLOCK_INTERVAL_MS);
   }
 
+  /**
+   * Process onboarding form submission.
+   * Validates input, persists user state, and transitions to the main app.
+   */
   function handleOnboarding() {
     const form = $("#onboarding-form");
     if (!validateForm(form)) {
       showToast("Please fill all required fields", "warning");
       return;
     }
+
+    // Capture and sanitize user inputs to prevent XSS
     _state.user = sanitize($("#user-name").value);
     _state.venue = $("#venue-select").value;
     _state.section = $("#seat-section").value;
     _state.accessibility = $("#accessibility-needs").value;
     _state.lang = $("#lang-select").value;
+
+    // Persist session to local storage
     storage.set("user", _state);
     storage.set("section", _state.section);
+
+    // Hide onboarding and display the main application
     $("#onboarding-modal").style.display = "none";
     showApp();
     showToast(`Welcome, ${_state.user}! 🎉`, "success");
+
+    // Announce welcome to screen readers
     AccessibilityService.announce(`Welcome to ArenaFlow AI, ${_state.user}`);
     document.documentElement.lang = _state.lang;
   }
@@ -255,12 +307,23 @@ const App = (() => {
     });
   }
 
+  /** @type {boolean} Whether the map canvas has been initialized. */
   let _mapInitialized = false;
+
+  /**
+   * Switch the active view and update navigation state.
+   * Initializes the map canvas on first visit to the map view.
+   * @param {string} view - View identifier (e.g. 'dashboard', 'map', 'concierge')
+   */
   function switchView(view) {
     _state.currentView = view;
+
+    // Hide all views, then show the target view
     $$(".view").forEach((v) => (v.style.display = "none"));
     const el = $(`#view-${view}`);
     if (el) el.style.display = "block";
+
+    // Update navigation button active states and ARIA attributes
     $$(".nav-btn[data-view]").forEach((b) => {
       b.classList.remove("active");
       b.removeAttribute("aria-current");
@@ -270,10 +333,15 @@ const App = (() => {
       btn.classList.add("active");
       btn.setAttribute("aria-current", "page");
     }
+
+    // Update title and announce to screen readers
     $("#view-title").textContent = VIEW_TITLES[view] || view;
     AccessibilityService.announce(`Navigated to ${VIEW_TITLES[view] || view}`);
+
+    // Track view change event in Google Analytics
     GoogleCloudService.trackEvent("view_change", { view_name: view });
-    // Initialize map canvas only when map view becomes visible
+
+    // Initialize map canvas only when map view becomes visible for performance
     if (view === "map" && !_mapInitialized) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -282,9 +350,47 @@ const App = (() => {
         });
       });
     }
-    // Re-init heatmap when returning to dashboard
+
+    // Re-initialize heatmap specifically when returning to the dashboard
     if (view === "dashboard") {
       requestAnimationFrame(initHeatmapCanvas);
+    }
+  }
+
+  /**
+   * Safely set text content of a DOM element by selector.
+   * @param {string} id - CSS selector
+   * @param {string|number} value - Text content to set
+   */
+  function setText(id, value) {
+    const element = $(id);
+    if (element) element.textContent = value;
+  }
+
+  /**
+   * Set a progress bar width and ARIA value.
+   * @param {string} id - CSS selector for the bar fill element
+   * @param {number} widthPercent - Bar fill width (0–100)
+   */
+  function setBar(id, widthPercent) {
+    const element = $(id);
+    if (element) {
+      element.style.width = widthPercent + "%";
+      element.setAttribute("aria-valuenow", Math.round(widthPercent));
+    }
+  }
+
+  /**
+   * Set a trend indicator's text and direction class.
+   * @param {string} id - CSS selector for the trend element
+   * @param {string} value - Display text
+   * @param {boolean} isPositive - Whether the trend is favorable
+   */
+  function setTrend(id, value, isPositive) {
+    const element = $(id);
+    if (element) {
+      element.textContent = value;
+      element.className = `stat-trend ${isPositive ? "trend-up" : "trend-down"}`;
     }
   }
 
@@ -295,22 +401,11 @@ const App = (() => {
    */
   function onCrowdTick(snapshot) {
     const avgD = Math.round(snapshot.avgDensity * 100);
-    const setText = (id, v) => {
-      const e = $(id);
-      if (e) e.textContent = v;
-    };
     setText("#stat-crowd", avgD + "%");
     setText("#stat-wait", CrowdEngine.getWaitTime("food") + " min");
     setText("#stat-flow", Math.round(87 + (Math.random() - 0.5) * 6) + "/100");
     setText("#stat-safety", CrowdEngine.getSafetyIndex() + "%");
     // Progress bars with ARIA updates
-    const setBar = (id, w) => {
-      const e = $(id);
-      if (e) {
-        e.style.width = w + "%";
-        e.setAttribute("aria-valuenow", Math.round(w));
-      }
-    };
     setBar("#bar-crowd", avgD);
     setBar(
       "#bar-wait",
@@ -318,17 +413,12 @@ const App = (() => {
     );
     setBar("#bar-safety", CrowdEngine.getSafetyIndex());
     // Trend indicators
-    const setTrend = (id, v, up) => {
-      const e = $(id);
-      if (e) {
-        e.textContent = v;
-        e.className = `stat-trend ${up ? "trend-up" : "trend-down"}`;
-      }
-    };
     setTrend(
       "#trend-crowd",
-      avgD > 60 ? "↑ " + (avgD - 60) + "%" : "↓ " + (60 - avgD) + "%",
-      avgD <= 60,
+      avgD > CROWD_TREND_THRESHOLD
+        ? "↑ " + (avgD - CROWD_TREND_THRESHOLD) + "%"
+        : "↓ " + (CROWD_TREND_THRESHOLD - avgD) + "%",
+      avgD <= CROWD_TREND_THRESHOLD,
     );
     renderPredictions();
     // Quick action wait times
@@ -350,24 +440,39 @@ const App = (() => {
     GoogleCloudService.submitToCloudFunction(snapshot);
   }
 
-  let _hmCanvas, _hmCtx;
+  /** @type {HTMLCanvasElement|null} Dashboard heatmap canvas reference. */
+  let _hmCanvas;
+
+  /** @type {CanvasRenderingContext2D|null} Dashboard heatmap 2D context. */
+  let _hmCtx;
+
+  /**
+   * Initialize the dashboard heatmap canvas dimensions and DPI scaling.
+   * Called on app start and when returning to the dashboard view.
+   */
   function initHeatmapCanvas() {
     _hmCanvas = $("#heatmap-canvas");
     if (!_hmCanvas) return;
     _hmCtx = _hmCanvas.getContext("2d");
-    const p = _hmCanvas.parentElement;
+    const parent = _hmCanvas.parentElement;
     const dpr = devicePixelRatio || 1;
-    const pw = p.clientWidth > 60 ? p.clientWidth - 48 : 650;
-    const cw = Math.min(pw, 700);
-    _hmCanvas.width = cw * dpr;
-    _hmCanvas.height = 400 * dpr;
-    _hmCanvas.style.width = cw + "px";
-    _hmCanvas.style.height = "400px";
-    _hmCtx.setTransform(1, 0, 0, 1, 0, 0); // reset transform before scaling
+    const parentWidth = parent.clientWidth > HEATMAP_MIN_PARENT_WIDTH
+      ? parent.clientWidth - HEATMAP_PARENT_PADDING
+      : HEATMAP_FALLBACK_WIDTH;
+    const canvasWidth = Math.min(parentWidth, HEATMAP_MAX_WIDTH);
+    _hmCanvas.width = canvasWidth * dpr;
+    _hmCanvas.height = HEATMAP_HEIGHT * dpr;
+    _hmCanvas.style.width = canvasWidth + "px";
+    _hmCanvas.style.height = HEATMAP_HEIGHT + "px";
+    _hmCtx.setTransform(1, 0, 0, 1, 0, 0);
     _hmCtx.scale(dpr, dpr);
-    // Draw immediately with current data
     drawHeatmapCanvas(CrowdEngine.getSnapshot());
   }
+  /**
+   * Draw the crowd density heatmap onto the dashboard canvas.
+   * Renders stadium outline, field, and zone density blobs.
+   * @param {object} snap - Current crowd engine snapshot
+   */
   function drawHeatmapCanvas(snap) {
     if (!_hmCtx) return;
     const w = _hmCanvas.clientWidth,
@@ -395,23 +500,27 @@ const App = (() => {
     snap.zones.forEach((z) => {
       const x = z.x * w,
         y = z.y * h,
-        r = 15 + z.density * 30;
-      const g = _hmCtx.createRadialGradient(x, y, 0, x, y, r);
+        blobRadius = BLOB_RADIUS_BASE + z.density * BLOB_RADIUS_SCALE;
+      const g = _hmCtx.createRadialGradient(x, y, 0, x, y, blobRadius);
       const color =
-        z.density > 0.8
+        z.density > DENSITY_THRESHOLD_HIGH
           ? "239,68,68"
-          : z.density > 0.6
+          : z.density > DENSITY_THRESHOLD_MEDIUM
             ? "245,158,11"
             : "16,185,129";
       g.addColorStop(0, `rgba(${color},${(0.5 + z.density * 0.3).toFixed(2)})`);
       g.addColorStop(1, `rgba(${color},0)`);
       _hmCtx.fillStyle = g;
       _hmCtx.beginPath();
-      _hmCtx.arc(x, y, r, 0, Math.PI * 2);
+      _hmCtx.arc(x, y, blobRadius, 0, Math.PI * 2);
       _hmCtx.fill();
     });
   }
 
+  /**
+   * Render AI crowd predictions into the prediction list.
+   * Each prediction shows time, description, and confidence level.
+   */
   function renderPredictions() {
     const list = $("#prediction-list");
     if (!list) return;
@@ -428,6 +537,10 @@ const App = (() => {
       .join("");
   }
 
+  /**
+   * Generate and render the personalized activity flow timeline.
+   * Queries FlowOptimizer with current user profile and crowd data.
+   */
   function renderFlow() {
     const timeline = $("#flow-timeline");
     if (!timeline) return;
@@ -448,13 +561,13 @@ const App = (() => {
       </div>`,
       )
       .join("");
-    const el = (id, v) => {
-      const e = $(id);
-      if (e) e.textContent = v;
+    const updateStat = (id, value) => {
+      const element = $(id);
+      if (element) element.textContent = value;
     };
-    el("#flow-time-saved", flow.totalTimeSaved + " min");
-    el("#flow-activities", flow.items.length);
-    el("#flow-score-val", flow.flowScore);
+    updateStat("#flow-time-saved", flow.totalTimeSaved + " min");
+    updateStat("#flow-activities", flow.items.length);
+    updateStat("#flow-score-val", flow.flowScore);
   }
 
   /** @type {number} Timestamp of last chat message for rate limiting. */
@@ -516,6 +629,12 @@ const App = (() => {
     }, SIMULATED_CHAT_DELAY_MS);
   }
 
+  /**
+   * Append a chat message bubble to the concierge conversation.
+   * @param {string} text - Message content
+   * @param {'user'|'bot'} role - Message sender role
+   * @returns {HTMLDivElement} The created message element
+   */
   function appendChatMsg(text, role) {
     const container = $("#chat-messages");
     const div = document.createElement("div");
@@ -528,19 +647,28 @@ const App = (() => {
     return div;
   }
 
+  /**
+   * Convert limited markdown syntax to safe HTML for chat display.
+   * Supports bold (**text**) and newlines.
+   * @param {string} text - Raw text with markdown formatting
+   * @returns {string} Sanitized HTML string
+   */
   function formatMarkdown(text) {
     return sanitize(text)
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\n/g, "<br>");
   }
 
+  /**
+   * Handle social group creation.
+   * Validates name input, creates group via FirebaseService, and displays the share code.
+   */
   function handleCreateGroup() {
-  const name = $("#group-name")?.value?.trim().substring(0, 50); // max 50 chars
-  if (!name) {
-    showToast("Enter a group name", "warning");
-    return;
-  }
-    // ... rest unchanged
+    const name = $("#group-name")?.value?.trim().substring(0, MAX_GROUP_NAME_LENGTH);
+    if (!name) {
+      showToast("Enter a group name", "warning");
+      return;
+    }
     const code = FirebaseService.createGroup(name, {
       name: _state.user,
       section: _state.section,
@@ -552,13 +680,16 @@ const App = (() => {
     showToast("Group created! Share the code.", "success");
   }
 
+  /**
+   * Handle joining an existing social group.
+   * Validates group code format before attempting to join via FirebaseService.
+   */
   function handleJoinGroup() {
-  const code = $("#join-code")?.value?.trim().toUpperCase();
-  if (!code || !/^ARENA-[A-Z0-9]{4}$/.test(code)) {
-    showToast("Enter a valid code (e.g. ARENA-X7K2)", "warning");
-    return;
-  }
-    // ... rest unchanged
+    const code = $("#join-code")?.value?.trim().toUpperCase();
+    if (!code || !/^ARENA-[A-Z0-9]{4}$/.test(code)) {
+      showToast("Enter a valid code (e.g. ARENA-X7K2)", "warning");
+      return;
+    }
     const group = FirebaseService.joinGroup(code, {
       name: _state.user,
       section: _state.section,
@@ -567,9 +698,15 @@ const App = (() => {
       _state.groupCode = code;
       showGroupMembers(code);
       showToast("Joined group!", "success");
-    } else showToast("Group not found", "danger");
+    } else {
+      showToast("Group not found", "danger");
+    }
   }
 
+  /**
+   * Display the member list for a social sync group.
+   * @param {string} code - Group code to display members for
+   */
   function showGroupMembers(code) {
     const group = FirebaseService.getGroup(code);
     if (!group) return;
@@ -589,6 +726,10 @@ const App = (() => {
       .join("");
   }
 
+  /**
+   * Find and display an AI-recommended meeting point for the current group.
+   * Uses FlowOptimizer to calculate the optimal location based on member positions.
+   */
   function handleFindMeetup() {
     const group = FirebaseService.getGroup(_state.groupCode);
     if (!group || !group.members.length) {
@@ -606,6 +747,10 @@ const App = (() => {
     showToast("Meeting point found!", "success");
   }
 
+  /**
+   * Render the static alerts list with sample notifications.
+   * In production, these would come from a real-time alert service.
+   */
   function renderAlerts() {
     const list = $("#alerts-list");
     if (!list) return;
@@ -661,6 +806,10 @@ const App = (() => {
       .join("");
   }
 
+  /**
+   * Activate emergency evacuation mode.
+   * Displays the emergency overlay with the nearest exit route.
+   */
   function triggerEmergency() {
     const overlay = $("#emergency-overlay");
     overlay.style.display = "flex";

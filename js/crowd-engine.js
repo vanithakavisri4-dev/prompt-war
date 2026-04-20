@@ -7,6 +7,13 @@
 // eslint-disable-next-line no-unused-vars
 const CrowdEngine = (() => {
   "use strict";
+  /* ── Constants ─────────────────────────────────────────────── */
+
+  /**
+   * Stadium zones with initial configuration.
+   * Each zone tracks position, capacity, density, and type.
+   * @type {Array<object>}
+   */
   // Stadium zones with initial config
   const ZONES = [
     {
@@ -254,46 +261,108 @@ const CrowdEngine = (() => {
     },
   ];
 
+  /* ── State ─────────────────────────────────────────────────── */
+
+  /** @type {number|null} Interval ID for the simulation tick loop. */
   let _tickInterval = null;
+
+  /** @type {Array<Function>} Registered listener callbacks for tick updates. */
   const _listeners = [];
-  let _eventPhase = "pre-game"; // pre-game | first-half | halftime | second-half | post-game
+
+  /** @type {string} Current event phase (pre-game|first-half|halftime|second-half|post-game). */
+  let _eventPhase = "pre-game";
+
+  /** @type {number} Total number of simulation ticks executed. */
   let _tickCount = 0;
+
+  /** Number of ticks between automatic phase advances (~2 min at 2s interval). */
+  const PHASE_ADVANCE_TICKS = 60;
+
+  /** Density noise amplitude per tick. */
+  const DENSITY_NOISE_RANGE = 0.08;
+
+  /** Interpolation speed toward phase target density. */
+  const DENSITY_LERP_SPEED = 0.04;
+
+  /** Minimum allowed zone density. */
+  const DENSITY_MIN = 0.02;
+
+  /** Maximum allowed zone density. */
+  const DENSITY_MAX = 0.98;
+
+  /** Extrapolation factor per minute ahead for predictions. */
+  const PREDICTION_LERP_FACTOR = 0.02;
+
+  /** Confidence decay rate per minute ahead for predictions. */
+  const PREDICTION_CONFIDENCE_DECAY = 0.03;
+
+  /** Maximum wait time calculation factor (minutes). */
+  const MAX_WAIT_TIME_MINUTES = 15;
+
+  /** Density threshold to trigger critical warning. */
+  const CRITICAL_DENSITY_THRESHOLD = 0.85;
+
+  /** Density threshold to trigger standard warning. */
+  const WARNING_DENSITY_THRESHOLD = 0.7;
 
   /**
    * Phase-based density modifiers simulate realistic crowd behavior.
+   * Each phase adjusts target density for different zone types.
+   * @type {Readonly<Record<string, Readonly<Record<string, number>>>>}
    */
   const PHASE_MODIFIERS = Object.freeze({
-    "pre-game": Object.freeze({ seating:0.3, concourse:0.8, food:0.9, gate:0.9, restroom:0.4, merch:0.85, medical:0.1, vip:0.5 }),
-    "first-half": Object.freeze({ seating:0.9, concourse:0.3, food:0.2, gate:0.1, restroom:0.3, merch:0.1, medical:0.15, vip:0.8 }),
-    halftime: Object.freeze({ seating:0.4, concourse:0.9, food:0.95, gate:0.15, restroom:0.9, merch:0.8, medical:0.2, vip:0.6 }),
-    "second-half": Object.freeze({ seating:0.85, concourse:0.35, food:0.25, gate:0.1, restroom:0.35, merch:0.15, medical:0.15, vip:0.75 }),
-    "post-game": Object.freeze({ seating:0.2, concourse:0.85, food:0.3, gate:0.95, restroom:0.5, merch:0.4, medical:0.1, vip:0.2 }),
+    "pre-game": Object.freeze({
+      seating: 0.3, concourse: 0.8, food: 0.9, gate: 0.9,
+      restroom: 0.4, merch: 0.85, medical: 0.1, vip: 0.5,
+    }),
+    "first-half": Object.freeze({
+      seating: 0.9, concourse: 0.3, food: 0.2, gate: 0.1,
+      restroom: 0.3, merch: 0.1, medical: 0.15, vip: 0.8,
+    }),
+    halftime: Object.freeze({
+      seating: 0.4, concourse: 0.9, food: 0.95, gate: 0.15,
+      restroom: 0.9, merch: 0.8, medical: 0.2, vip: 0.6,
+    }),
+    "second-half": Object.freeze({
+      seating: 0.85, concourse: 0.35, food: 0.25, gate: 0.1,
+      restroom: 0.35, merch: 0.15, medical: 0.15, vip: 0.75,
+    }),
+    "post-game": Object.freeze({
+      seating: 0.2, concourse: 0.85, food: 0.3, gate: 0.95,
+      restroom: 0.5, merch: 0.4, medical: 0.1, vip: 0.2,
+    }),
   });
 
+  /* ── Simulation ───────────────────────────────────────────── */
+
   /**
-   * Simulate one tick of crowd movement.
-   * Uses phase modifiers + random noise for realistic density changes.
+   * Execute one tick of the crowd simulation.
+   * Updates zone densities using phase-based targets with random noise,
+   * then notifies all registered listeners.
    */
   function tick() {
     _tickCount++;
-    // Auto-advance phase every ~60 ticks (2 min at 2s interval)
-    if (_tickCount % 60 === 0) advancePhase();
+    if (_tickCount % PHASE_ADVANCE_TICKS === 0) {
+      advancePhase();
+    }
 
     const mods = PHASE_MODIFIERS[_eventPhase];
     ZONES.forEach((zone) => {
       const target = mods[zone.type] || 0.5;
-      const noise = (Math.random() - 0.5) * 0.08;
-      // Smooth interpolation toward target with noise
+      const noise = (Math.random() - 0.5) * DENSITY_NOISE_RANGE;
       zone.density = ArenaUtils.clamp(
-        ArenaUtils.lerp(zone.density, target, 0.04) + noise,
-        0.02,
-        0.98,
+        ArenaUtils.lerp(zone.density, target, DENSITY_LERP_SPEED) + noise,
+        DENSITY_MIN,
+        DENSITY_MAX,
       );
     });
     _listeners.forEach((fn) => fn(getSnapshot()));
   }
 
-  /** Advance to the next event phase. */
+  /**
+   * Advance the event to the next chronological phase.
+   * Progresses through: pre-game → first-half → halftime → second-half → post-game.
+   */
   function advancePhase() {
     const order = [
       "pre-game",
@@ -312,12 +381,22 @@ const CrowdEngine = (() => {
     }
   }
 
-  /** Set phase manually. */
+  /**
+   * Manually set the event phase.
+   * Rejects invalid phase names silently.
+   * @param {string} phase - Phase identifier to set
+   */
   function setPhase(phase) {
     if (PHASE_MODIFIERS[phase]) _eventPhase = phase;
   }
 
-  /** Get current snapshot of all zone data. */
+  /* ── Data Access ──────────────────────────────────────────── */
+
+  /**
+   * Get a snapshot of all current zone data.
+   * Returns a deep copy to prevent external mutation.
+   * @returns {{timestamp: number, phase: string, zones: Array, avgDensity: number, totalAttendees: number}}
+   */
   function getSnapshot() {
     return {
       timestamp: Date.now(),
@@ -342,12 +421,16 @@ const CrowdEngine = (() => {
     if (!zone) return { predicted: 0.5, confidence: 0 };
     const futureMods = PHASE_MODIFIERS[_eventPhase];
     const target = futureMods[zone.type] || 0.5;
+
+    // Linear interpolation towards the phase target based on time horizon
     const predicted = ArenaUtils.clamp(
-      ArenaUtils.lerp(zone.density, target, minutesAhead * 0.02),
+      ArenaUtils.lerp(zone.density, target, minutesAhead * PREDICTION_LERP_FACTOR),
       0,
       1,
     );
-    const confidence = Math.max(0.5, 1 - minutesAhead * 0.03);
+
+    // Confidence drops linearly as we predict further into the future
+    const confidence = Math.max(0.5, 1 - minutesAhead * PREDICTION_CONFIDENCE_DECAY);
     return {
       predicted: Math.round(predicted * 100) / 100,
       confidence: Math.round(confidence * 100) / 100,
@@ -363,7 +446,8 @@ const CrowdEngine = (() => {
     const zones = ZONES.filter((z) => z.type === type);
     if (!zones.length) return 0;
     const avgDensity = zones.reduce((s, z) => s + z.density, 0) / zones.length;
-    return Math.round(avgDensity * 15); // Max 15 min wait at 100% density
+    // Scale average density against the maximum wait time for this type
+    return Math.round(avgDensity * MAX_WAIT_TIME_MINUTES);
   }
 
   /**
@@ -406,16 +490,19 @@ const CrowdEngine = (() => {
       });
       let type = "info";
       let text = "";
-      if (maxPred.predicted > 0.85) {
+
+      // Classify the prediction severity based on density thresholds
+      if (maxPred.predicted > CRITICAL_DENSITY_THRESHOLD) {
         type = "danger";
         text = `${maxZone.name} expected to reach critical density (${Math.round(maxPred.predicted * 100)}%)`;
-      } else if (maxPred.predicted > 0.7) {
+      } else if (maxPred.predicted > WARNING_DENSITY_THRESHOLD) {
         type = "warning";
         text = `${maxZone.name} likely to be crowded (${Math.round(maxPred.predicted * 100)}%)`;
       } else {
         type = "success";
         text = `${maxZone.name} predicted comfortable (${Math.round(maxPred.predicted * 100)}%)`;
       }
+
       preds.push({
         time: timeStr,
         text,
@@ -426,25 +513,39 @@ const CrowdEngine = (() => {
     return preds;
   }
 
-  /** Register a listener for tick updates. */
+  /* ── Lifecycle ────────────────────────────────────────────── */
+
+  /**
+   * Register a callback to be invoked on each simulation tick.
+   * @param {Function} fn - Callback receiving the current snapshot
+   */
   function onUpdate(fn) {
     _listeners.push(fn);
   }
 
-  /** Start the simulation. */
+  /**
+   * Start the crowd simulation loop.
+   * @param {number} [intervalMs=2000] - Tick interval in milliseconds
+   */
   function start(intervalMs = 2000) {
     if (_tickInterval) return;
     _tickInterval = setInterval(tick, intervalMs);
     tick(); // Immediate first tick
   }
 
-  /** Stop the simulation. */
+  /**
+   * Stop the crowd simulation loop.
+   */
   function stop() {
     clearInterval(_tickInterval);
     _tickInterval = null;
   }
 
-  /** Get safety index (0-100). */
+  /**
+   * Calculate the overall safety index (0–100).
+   * Factors in both average and maximum zone densities.
+   * @returns {number} Safety index percentage
+   */
   function getSafetyIndex() {
     const avgDensity = ZONES.reduce((s, z) => s + z.density, 0) / ZONES.length;
     const maxDensity = Math.max(...ZONES.map((z) => z.density));
