@@ -20,6 +20,28 @@ const GeminiService = (() => {
   const GEMINI_ENDPOINT =
     "https://generativelanguage.googleapis.com/v1beta/models";
 
+  /** Multiplier for converting to percentages. */
+  const PERCENT_MULTIPLIER = 100;
+
+  /** Default density percentages. */
+  const DEFAULT_DENSITY_FOOD = 50;
+  const DEFAULT_DENSITY_RESTROOM = 45;
+  const DEFAULT_DENSITY_EXIT = 25;
+  const DEFAULT_DENSITY_MERCH = 70;
+  const DEFAULT_DENSITY_CONCOURSE = 0.5;
+
+  /** High crowd threshold percentage. */
+  const HIGH_CROWD_PERCENT = 70;
+
+  /** Multiplier to estimate exit time from density. */
+  const EXIT_TIME_MULTIPLIER = 12;
+
+  /** Default density to use for exit calculation if unknown. */
+  const DEFAULT_EXIT_DENSITY = 0.3;
+
+  /** Additional time for browsing merch. */
+  const MERCH_BROWSE_ADDED_MINS = 5;
+
   /* ── State ─────────────────────────────────────────────────── */
 
   /**
@@ -153,13 +175,13 @@ const GeminiService = (() => {
     const lines = [
       `Event Phase: ${s.phase}`,
       `Total Attendees: ~${s.totalAttendees?.toLocaleString()}`,
-      `Average Density: ${Math.round(s.avgDensity * 100)}%`,
+      `Average Density: ${Math.round(s.avgDensity * PERCENT_MULTIPLIER)}%`,
       `Safety Index: ${CrowdEngine.getSafetyIndex()}%`,
       "",
       "Zone Densities:",
     ];
     s.zones?.forEach((z) => {
-      lines.push(`  ${z.name}: ${Math.round(z.density * 100)}% (${z.type})`);
+      lines.push(`  ${z.name}: ${Math.round(z.density * PERCENT_MULTIPLIER)}% (${z.type})`);
     });
     if (ctx.userSection) lines.push(`\nUser Section: ${ctx.userSection}`);
     if (ctx.accessibility) lines.push(`Accessibility: ${ctx.accessibility}`);
@@ -184,7 +206,7 @@ const GeminiService = (() => {
       const wait = CrowdEngine.getWaitTime("food");
       return (
         `🍔 **Best food option right now:** ${best ? best.name : "Food Court NW"}\n\n` +
-        `📊 Current density: ${best ? Math.round(best.density * 100) : 50}%\n` +
+        `📊 Current density: ${best ? Math.round(best.density * PERCENT_MULTIPLIER) : DEFAULT_DENSITY_FOOD}%\n` +
         `⏱️ Estimated wait: ~${wait} minutes\n\n` +
         `💡 **Pro tip:** ${wait > 8 ? "Wait times are high! I recommend going in about 10 minutes when the rush subsides." : "Great time to grab food — lines are short!"}`
       );
@@ -196,7 +218,7 @@ const GeminiService = (() => {
       const wait = CrowdEngine.getWaitTime("restroom");
       return (
         `🚻 **Nearest available restroom:** ${best ? best.name : "Restrooms North"}\n\n` +
-        `📊 Current density: ${best ? Math.round(best.density * 100) : 45}%\n` +
+        `📊 Current density: ${best ? Math.round(best.density * PERCENT_MULTIPLIER) : DEFAULT_DENSITY_RESTROOM}%\n` +
         `⏱️ Estimated wait: ~${wait} minutes\n\n` +
         `🗺️ Head towards the ${best ? best.name.split(" ").pop() : "North"} concourse.`
       );
@@ -208,20 +230,20 @@ const GeminiService = (() => {
         `🗺️ **Navigation Help**\n\n` +
         `Your section: **${context.userSection || "North Lower"}**\n` +
         `📍 Follow the illuminated signs along the concourse.\n\n` +
-        `Current concourse density: ${Math.round((snapshot.zones?.find((z) => z.id === "concourse-n")?.density || 0.5) * 100)}%\n\n` +
+        `Current concourse density: ${Math.round((snapshot.zones?.find((z) => z.id === "concourse-n")?.density || DEFAULT_DENSITY_CONCOURSE) * PERCENT_MULTIPLIER)}%\n\n` +
         `💡 Would you like me to find the fastest route to a specific location?`
       );
     }
 
     // Crowd / wait time queries
     if (msg.match(/crowd|busy|wait|line|queue|density|packed/)) {
-      const avgD = Math.round(snapshot.avgDensity * 100);
+      const avgD = Math.round(snapshot.avgDensity * PERCENT_MULTIPLIER);
       return (
         `📊 **Current Crowd Status**\n\n` +
         `🏟️ Overall density: **${avgD}%**\n` +
         `🛡️ Safety index: **${CrowdEngine.getSafetyIndex()}%**\n` +
         `📈 Phase: **${snapshot.phase?.replace("-", " ")}**\n\n` +
-        `${avgD > 70 ? "⚠️ Venue is getting crowded. Consider waiting before moving." : "✅ Comfortable crowd levels — good time to move around!"}`
+        `${avgD > HIGH_CROWD_PERCENT ? "⚠️ Venue is getting crowded. Consider waiting before moving." : "✅ Comfortable crowd levels — good time to move around!"}`
       );
     }
 
@@ -230,8 +252,8 @@ const GeminiService = (() => {
       const best = CrowdEngine.findLeastCrowded("gate");
       return (
         `🚪 **Fastest Exit: ${best ? best.name : "Gate B"}**\n\n` +
-        `📊 Current density: ${best ? Math.round(best.density * 100) : 25}%\n` +
-        `⏱️ Estimated exit time: ~${Math.round((best?.density || 0.3) * 12)} minutes\n\n` +
+        `📊 Current density: ${best ? Math.round(best.density * PERCENT_MULTIPLIER) : DEFAULT_DENSITY_EXIT}%\n` +
+        `⏱️ Estimated exit time: ~${Math.round((best?.density || DEFAULT_EXIT_DENSITY) * EXIT_TIME_MULTIPLIER)} minutes\n\n` +
         `💡 **Smart tip:** Leaving 5 minutes before the final whistle can save you up to 20 minutes in exit queues!`
       );
     }
@@ -253,8 +275,8 @@ const GeminiService = (() => {
       return (
         `🛍️ **Merchandise Store**\n\n` +
         `📍 Location: ${best ? best.name : "Main Merchandise Store"}\n` +
-        `📊 Current density: ${best ? Math.round(best.density * 100) : 70}%\n` +
-        `⏱️ Estimated browse time with current crowds: ~${CrowdEngine.getWaitTime("merch") + 5} minutes\n\n` +
+        `📊 Current density: ${best ? Math.round(best.density * PERCENT_MULTIPLIER) : DEFAULT_DENSITY_MERCH}%\n` +
+        `⏱️ Estimated browse time with current crowds: ~${CrowdEngine.getWaitTime("merch") + MERCH_BROWSE_ADDED_MINS} minutes\n\n` +
         `💡 Best time to visit: During play when most fans are in their seats.`
       );
     }

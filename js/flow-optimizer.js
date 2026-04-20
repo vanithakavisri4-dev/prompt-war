@@ -26,6 +26,48 @@ const FlowOptimizer = (() => {
 
   /** Minimum number of time slots to generate. */
   const MIN_SLOT_COUNT = 8;
+
+  /** Multiplier for converting to percentages. */
+  const PERCENT_MULTIPLIER = 100;
+
+  /** Divisor to convert milliseconds to minutes. */
+  const MS_PER_MINUTE = 60000;
+
+  /** Priority weight for activity scoring. */
+  const PRIORITY_SCORE_WEIGHT = 2;
+
+  /** Maximum stagger delay in minutes. */
+  const MAX_STAGGER_MINUTES = 5;
+
+  /** Multiplier for estimating worst-case wait time. */
+  const WORST_WAIT_MULTIPLIER = 1.8;
+
+  /** Base wait time factor for optimized flow. */
+  const OPTIMIZED_WAIT_BASE_FACTOR = 0.5;
+
+  /** Dynamic wait time factor for optimized flow based on density. */
+  const OPTIMIZED_WAIT_DENSITY_FACTOR = 0.5;
+
+  /** Multiplier for calculating wait time reduction. */
+  const WAIT_REDUCTION_FACTOR = 0.6;
+
+  /** Base flow score. */
+  const FLOW_SCORE_BASE = 70;
+
+  /** Max flow score. */
+  const FLOW_SCORE_MAX = 99;
+
+  /** Weight of time saved in flow score. */
+  const FLOW_SCORE_SAVINGS_WEIGHT = 0.8;
+
+  /** Random variation in flow score. */
+  const FLOW_SCORE_RANDOM_VARIATION = 10;
+
+  /** Distance to density balance weight for meeting point score. */
+  const MEETING_DENSITY_WEIGHT = 0.5;
+
+  /** Multiplier for converting abstract score to meters. */
+  const METERS_PER_SCORE_UNIT = 10;
   /**
    * Activity templates with base durations and priorities.
    */
@@ -133,14 +175,14 @@ const FlowOptimizer = (() => {
     const scoredAssignments = [];
     activities.forEach((activity) => {
       slots.forEach((slot, sIdx) => {
-        const minutesFromNow = (slot.getTime() - now.getTime()) / 60000;
+        const minutesFromNow = (slot.getTime() - now.getTime()) / MS_PER_MINUTE;
         const prediction = CrowdEngine.predict(
           getBestZoneForType(activity.zoneType, crowdSnapshot)?.id ||
             "concourse-n",
           minutesFromNow,
         );
         // Lower density = better score; also factor in activity priority
-        const score = (1 - prediction.predicted) * 100 - activity.priority * 2;
+        const score = (1 - prediction.predicted) * PERCENT_MULTIPLIER - activity.priority * PRIORITY_SCORE_WEIGHT;
         scoredAssignments.push({
           activity,
           slot,
@@ -170,23 +212,23 @@ const FlowOptimizer = (() => {
     assignments.sort((a, b) => a.slot - b.slot);
 
     // Add stagger offset (simulates coordination with other users)
-    const staggerMin = Math.floor(Math.random() * 5);
+    const staggerMin = Math.floor(Math.random() * MAX_STAGGER_MINUTES);
 
     // Calculate savings
     const totalSaved = assignments.reduce((sum, a) => {
-      const worstWait = Math.round(a.activity.baseDuration * 1.8);
+      const worstWait = Math.round(a.activity.baseDuration * WORST_WAIT_MULTIPLIER);
       const optimizedWait = Math.round(
-        a.activity.baseDuration * (0.5 + a.prediction.predicted * 0.5),
+        a.activity.baseDuration * (OPTIMIZED_WAIT_BASE_FACTOR + a.prediction.predicted * OPTIMIZED_WAIT_DENSITY_FACTOR),
       );
       return sum + (worstWait - optimizedWait);
     }, 0);
 
     return {
       items: assignments.map((a, i) => {
-        const time = new Date(a.slot.getTime() + staggerMin * 60000);
+        const time = new Date(a.slot.getTime() + staggerMin * MS_PER_MINUTE);
         const zone = getBestZoneForType(a.activity.zoneType, crowdSnapshot);
         const waitReduction = Math.round(
-          a.activity.baseDuration * (1 - a.prediction.predicted) * 0.6,
+          a.activity.baseDuration * (1 - a.prediction.predicted) * WAIT_REDUCTION_FACTOR,
         );
         return {
           id: a.activity.id,
@@ -198,8 +240,8 @@ const FlowOptimizer = (() => {
           icon: a.activity.icon,
           duration: `${a.activity.baseDuration} min`,
           zone: zone ? zone.name : "Nearest available",
-          density: Math.round(a.prediction.predicted * 100),
-          confidence: Math.round(a.prediction.confidence * 100),
+          density: Math.round(a.prediction.predicted * PERCENT_MULTIPLIER),
+          confidence: Math.round(a.prediction.confidence * PERCENT_MULTIPLIER),
           savings:
             waitReduction > 0 ? `${waitReduction} min saved vs. average` : null,
           status: i === 0 ? "active" : "upcoming",
@@ -207,8 +249,8 @@ const FlowOptimizer = (() => {
       }),
       totalTimeSaved: totalSaved,
       flowScore: Math.min(
-        99,
-        Math.round(70 + totalSaved * 0.8 + Math.random() * 10),
+        FLOW_SCORE_MAX,
+        Math.round(FLOW_SCORE_BASE + totalSaved * FLOW_SCORE_SAVINGS_WEIGHT + Math.random() * FLOW_SCORE_RANDOM_VARIATION),
       ),
     };
   }
@@ -254,7 +296,7 @@ const FlowOptimizer = (() => {
     const slots = [];
     const totalSlots = Math.max(count + 2, MIN_SLOT_COUNT);
     for (let i = 0; i < totalSlots; i++) {
-      slots.push(new Date(start.getTime() + i * SLOT_INTERVAL_MINUTES * 60000));
+      slots.push(new Date(start.getTime() + i * SLOT_INTERVAL_MINUTES * MS_PER_MINUTE));
     }
     return slots;
   }
@@ -303,7 +345,7 @@ const FlowOptimizer = (() => {
     let bestScore = Infinity;
     candidates.forEach((z) => {
       const dist = Math.sqrt((z.x - cx) ** 2 + (z.y - cy) ** 2);
-      const score = dist + z.density * 0.5; // Balance distance and crowding
+      const score = dist + z.density * MEETING_DENSITY_WEIGHT; // Balance distance and crowding
       if (score < bestScore) {
         bestScore = score;
         best = z;
@@ -312,7 +354,7 @@ const FlowOptimizer = (() => {
 
     return {
       zone: best,
-      message: `Meet at ${best.name} — currently ${Math.round(best.density * 100)}% capacity, ~${Math.round(bestScore * 10)} meters from group center`,
+      message: `Meet at ${best.name} — currently ${Math.round(best.density * PERCENT_MULTIPLIER)}% capacity, ~${Math.round(bestScore * METERS_PER_SCORE_UNIT)} meters from group center`,
     };
   }
 

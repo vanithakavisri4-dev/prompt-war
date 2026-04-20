@@ -57,6 +57,18 @@ const MapsService = (() => {
   /** Minimum field font size (px). */
   const MIN_FIELD_FONT_SIZE = 10;
 
+  /** Y-offset for zone labels. */
+  const LABEL_Y_OFFSET = 20;
+
+  /** Multiplier for milliseconds to seconds conversion. */
+  const MS_TO_SECONDS = 1000;
+
+  /** Minimum font size for 'YOU' marker label. */
+  const USER_LABEL_MIN_FONT_SIZE = 9;
+
+  /** Font scale for 'YOU' marker label. */
+  const USER_LABEL_FONT_SCALE = 0.014;
+
   /** Stadium outer wall polygon vertices (normalized 0-1 coordinates). */
   const OUTER_WALL = Object.freeze([
     { x: 0.5, y: 0.02 },
@@ -469,7 +481,7 @@ const MapsService = (() => {
         const label = zone.name
           .replace(" Stand ", " ")
           .replace("Concourse", "Conc.");
-        _ctx.fillText(label, zone.x * w, zone.y * h + 20);
+        _ctx.fillText(label, zone.x * w, zone.y * h + LABEL_Y_OFFSET);
       });
   }
 
@@ -488,7 +500,7 @@ const MapsService = (() => {
     const pulseRadius =
       USER_DOT_RADIUS +
       USER_RING_OFFSET +
-      Math.sin((Date.now() / 1000) * USER_PULSE_SPEED) * USER_PULSE_AMPLITUDE;
+      Math.sin((Date.now() / MS_TO_SECONDS) * USER_PULSE_SPEED) * USER_PULSE_AMPLITUDE;
 
     // Pulsing outer ring
     _ctx.beginPath();
@@ -507,7 +519,7 @@ const MapsService = (() => {
     _ctx.stroke();
 
     // "YOU" label
-    const labelFontSize = Math.max(9, w * 0.014);
+    const labelFontSize = Math.max(USER_LABEL_MIN_FONT_SIZE, w * USER_LABEL_FONT_SCALE);
     _ctx.fillStyle = "#fff";
     _ctx.font = `bold ${labelFontSize}px Inter, sans-serif`;
     _ctx.textAlign = "center";

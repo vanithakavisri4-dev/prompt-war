@@ -305,6 +305,21 @@ const CrowdEngine = (() => {
   /** Density threshold to trigger standard warning. */
   const WARNING_DENSITY_THRESHOLD = 0.7;
 
+  /** Multiplier for converting to percentages. */
+  const PERCENT_MULTIPLIER = 100;
+
+  /** Weight applied to maximum density when calculating safety. */
+  const SAFETY_MAX_DENSITY_WEIGHT = 0.5;
+
+  /** Weight applied to average density when calculating safety. */
+  const SAFETY_AVG_DENSITY_WEIGHT = 0.3;
+
+  /** Minimum confidence level for predictions. */
+  const PREDICTION_MIN_CONFIDENCE = 0.5;
+
+  /** Time intervals in minutes to generate predictions for. */
+  const PREDICTION_INTERVALS_MINUTES = Object.freeze([5, 10, 15, 20, 30]);
+
   /**
    * Phase-based density modifiers simulate realistic crowd behavior.
    * Each phase adjusts target density for different zone types.
@@ -430,10 +445,10 @@ const CrowdEngine = (() => {
     );
 
     // Confidence drops linearly as we predict further into the future
-    const confidence = Math.max(0.5, 1 - minutesAhead * PREDICTION_CONFIDENCE_DECAY);
+    const confidence = Math.max(PREDICTION_MIN_CONFIDENCE, 1 - minutesAhead * PREDICTION_CONFIDENCE_DECAY);
     return {
-      predicted: Math.round(predicted * 100) / 100,
-      confidence: Math.round(confidence * 100) / 100,
+      predicted: Math.round(predicted * PERCENT_MULTIPLIER) / PERCENT_MULTIPLIER,
+      confidence: Math.round(confidence * PERCENT_MULTIPLIER) / PERCENT_MULTIPLIER,
     };
   }
 
@@ -470,7 +485,7 @@ const CrowdEngine = (() => {
    */
   function generatePredictions() {
     const preds = [];
-    const intervals = [5, 10, 15, 20, 30];
+    const intervals = PREDICTION_INTERVALS_MINUTES;
     const now = new Date();
     intervals.forEach((min) => {
       const futureTime = new Date(now.getTime() + min * 60000);
@@ -494,19 +509,19 @@ const CrowdEngine = (() => {
       // Classify the prediction severity based on density thresholds
       if (maxPred.predicted > CRITICAL_DENSITY_THRESHOLD) {
         type = "danger";
-        text = `${maxZone.name} expected to reach critical density (${Math.round(maxPred.predicted * 100)}%)`;
+        text = `${maxZone.name} expected to reach critical density (${Math.round(maxPred.predicted * PERCENT_MULTIPLIER)}%)`;
       } else if (maxPred.predicted > WARNING_DENSITY_THRESHOLD) {
         type = "warning";
-        text = `${maxZone.name} likely to be crowded (${Math.round(maxPred.predicted * 100)}%)`;
+        text = `${maxZone.name} likely to be crowded (${Math.round(maxPred.predicted * PERCENT_MULTIPLIER)}%)`;
       } else {
         type = "success";
-        text = `${maxZone.name} predicted comfortable (${Math.round(maxPred.predicted * 100)}%)`;
+        text = `${maxZone.name} predicted comfortable (${Math.round(maxPred.predicted * PERCENT_MULTIPLIER)}%)`;
       }
 
       preds.push({
         time: timeStr,
         text,
-        confidence: `${Math.round(maxPred.confidence * 100)}%`,
+        confidence: `${Math.round(maxPred.confidence * PERCENT_MULTIPLIER)}%`,
         type,
       });
     });
@@ -549,7 +564,7 @@ const CrowdEngine = (() => {
   function getSafetyIndex() {
     const avgDensity = ZONES.reduce((s, z) => s + z.density, 0) / ZONES.length;
     const maxDensity = Math.max(...ZONES.map((z) => z.density));
-    return Math.round((1 - maxDensity * 0.5 - avgDensity * 0.3) * 100);
+    return Math.round((1 - maxDensity * SAFETY_MAX_DENSITY_WEIGHT - avgDensity * SAFETY_AVG_DENSITY_WEIGHT) * PERCENT_MULTIPLIER);
   }
 
   return {

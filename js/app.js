@@ -72,6 +72,36 @@ const App = (() => {
   /** Additional blob radius scale per density unit (px). */
   const BLOB_RADIUS_SCALE = 30;
 
+  /** Multiplier to convert density to percentage (100). */
+  const PERCENT_MULTIPLIER = 100;
+
+  /** Base flow score value. */
+  const FLOW_SCORE_BASE = 87;
+
+  /** Flow score random variation range. */
+  const FLOW_SCORE_VARIATION = 6;
+
+  /** Random offset for centering noise (-0.5). */
+  const RANDOM_CENTER_OFFSET = 0.5;
+
+  /** Stadium outer ellipse radius X/Y ratio. */
+  const HEATMAP_STADIUM_OUTER_RATIO = 0.44;
+
+  /** Stadium inner ellipse radius X/Y ratio. */
+  const HEATMAP_STADIUM_INNER_RATIO = 0.28;
+
+  /** Stadium field ellipse radius X/Y ratio. */
+  const HEATMAP_FIELD_RATIO = 0.18;
+
+  /** Base opacity for heatmap blobs. */
+  const HEATMAP_BLOB_BASE_OPACITY = 0.5;
+
+  /** Opacity scale factor for heatmap blobs based on density. */
+  const HEATMAP_BLOB_OPACITY_SCALE = 0.3;
+
+  /** Animation delay step per flow item (seconds). */
+  const FLOW_ITEM_ANIM_DELAY_SEC = 0.1;
+
   /** View name mapping for navigation titles. */
   const VIEW_TITLES = Object.freeze({
     dashboard: "Dashboard",
@@ -400,16 +430,16 @@ const App = (() => {
    * @param {object} snapshot - Current crowd engine snapshot
    */
   function onCrowdTick(snapshot) {
-    const avgD = Math.round(snapshot.avgDensity * 100);
+    const avgD = Math.round(snapshot.avgDensity * PERCENT_MULTIPLIER);
     setText("#stat-crowd", avgD + "%");
     setText("#stat-wait", CrowdEngine.getWaitTime("food") + " min");
-    setText("#stat-flow", Math.round(87 + (Math.random() - 0.5) * 6) + "/100");
+    setText("#stat-flow", Math.round(FLOW_SCORE_BASE + (Math.random() - RANDOM_CENTER_OFFSET) * FLOW_SCORE_VARIATION) + "/100");
     setText("#stat-safety", CrowdEngine.getSafetyIndex() + "%");
     // Progress bars with ARIA updates
     setBar("#bar-crowd", avgD);
     setBar(
       "#bar-wait",
-      (CrowdEngine.getWaitTime("food") / MAX_WAIT_MINUTES) * 100,
+      (CrowdEngine.getWaitTime("food") / MAX_WAIT_MINUTES) * PERCENT_MULTIPLIER,
     );
     setBar("#bar-safety", CrowdEngine.getSafetyIndex());
     // Trend indicators
@@ -482,19 +512,19 @@ const App = (() => {
     _hmCtx.fillRect(0, 0, w, h);
     // Stadium outline ellipse
     _hmCtx.beginPath();
-    _hmCtx.ellipse(w / 2, h / 2, w * 0.44, h * 0.44, 0, 0, Math.PI * 2);
+    _hmCtx.ellipse(w / 2, h / 2, w * HEATMAP_STADIUM_OUTER_RATIO, h * HEATMAP_STADIUM_OUTER_RATIO, 0, 0, Math.PI * 2);
     _hmCtx.strokeStyle = "rgba(108,99,255,0.3)";
     _hmCtx.lineWidth = 2;
     _hmCtx.stroke();
     _hmCtx.beginPath();
-    _hmCtx.ellipse(w / 2, h / 2, w * 0.28, h * 0.28, 0, 0, Math.PI * 2);
+    _hmCtx.ellipse(w / 2, h / 2, w * HEATMAP_STADIUM_INNER_RATIO, h * HEATMAP_STADIUM_INNER_RATIO, 0, 0, Math.PI * 2);
     _hmCtx.strokeStyle = "rgba(0,212,255,0.2)";
     _hmCtx.lineWidth = 1;
     _hmCtx.stroke();
     // Field
     _hmCtx.fillStyle = "rgba(16,185,129,0.08)";
     _hmCtx.beginPath();
-    _hmCtx.ellipse(w / 2, h / 2, w * 0.18, h * 0.18, 0, 0, Math.PI * 2);
+    _hmCtx.ellipse(w / 2, h / 2, w * HEATMAP_FIELD_RATIO, h * HEATMAP_FIELD_RATIO, 0, 0, Math.PI * 2);
     _hmCtx.fill();
     if (!snap?.zones) return;
     snap.zones.forEach((z) => {
@@ -508,7 +538,7 @@ const App = (() => {
           : z.density > DENSITY_THRESHOLD_MEDIUM
             ? "245,158,11"
             : "16,185,129";
-      g.addColorStop(0, `rgba(${color},${(0.5 + z.density * 0.3).toFixed(2)})`);
+      g.addColorStop(0, `rgba(${color},${(HEATMAP_BLOB_BASE_OPACITY + z.density * HEATMAP_BLOB_OPACITY_SCALE).toFixed(2)})`);
       g.addColorStop(1, `rgba(${color},0)`);
       _hmCtx.fillStyle = g;
       _hmCtx.beginPath();
@@ -553,7 +583,7 @@ const App = (() => {
     timeline.innerHTML = flow.items
       .map(
         (item, i) => `
-      <div class="flow-item ${sanitize(item.status)}" role="listitem" style="animation-delay:${i * 0.1}s">
+      <div class="flow-item ${sanitize(item.status)}" role="listitem" style="animation-delay:${i * FLOW_ITEM_ANIM_DELAY_SEC}s">
         <span class="flow-item-time">${sanitize(item.time)}</span>
         <h3 class="flow-item-title">${sanitize(item.icon)} ${sanitize(item.label)}</h3>
         <p class="flow-item-desc">📍 ${sanitize(item.zone)} · ${sanitize(item.duration)} · Density: ${sanitize(item.density)}%</p>

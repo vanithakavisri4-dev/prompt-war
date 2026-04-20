@@ -54,6 +54,30 @@ const GoogleCloudService = (() => {
   /** Rate limit: minimum interval between Cloud Function calls (ms). */
   const CLOUD_FUNCTION_RATE_LIMIT_MS = 5000;
 
+  /** Multiplier to convert to percentages or preserve decimal places. */
+  const PERCENT_MULTIPLIER = 100;
+
+  /** Multiplier to preserve 3 decimal places. */
+  const DECIMAL_MULTIPLIER_3 = 1000;
+
+  /** Cloud Function timeout in milliseconds. */
+  const CLOUD_FUNCTION_TIMEOUT_MS = 5000;
+
+  /** BigQuery timeout in milliseconds. */
+  const BIGQUERY_TIMEOUT_MS = 8000;
+
+  /** Milliseconds in a single day. */
+  const MS_PER_DAY = 86400000;
+
+  /** Vertex AI timeout in milliseconds. */
+  const VERTEX_AI_TIMEOUT_MS = 5000;
+
+  /** Divisor to convert bytes to megabytes. */
+  const BYTES_TO_MB = 1048576;
+
+  /** Divisor to convert milliseconds to seconds. */
+  const MS_TO_SECONDS = 1000;
+
   /* ── State ─────────────────────────────────────────────────── */
 
   /**
@@ -168,7 +192,7 @@ const GoogleCloudService = (() => {
             clsValue += entry.value;
           }
         });
-        _config.cls = Math.round(clsValue * 1000) / 1000;
+        _config.cls = Math.round(clsValue * DECIMAL_MULTIPLIER_3) / DECIMAL_MULTIPLIER_3;
       });
       clsObserver.observe({ type: "layout-shift", buffered: true });
     } catch {
@@ -310,7 +334,7 @@ const GoogleCloudService = (() => {
         zones: (crowdSnapshot.zones || []).map((z) => ({
           id: z.id,
           type: z.type,
-          density: Math.round(z.density * 100) / 100,
+          density: Math.round(z.density * PERCENT_MULTIPLIER) / PERCENT_MULTIPLIER,
         })),
       },
     };
@@ -323,7 +347,7 @@ const GoogleCloudService = (() => {
           "X-Cloud-Project": PROJECT_ID,
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(CLOUD_FUNCTION_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -377,7 +401,7 @@ const GoogleCloudService = (() => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(query),
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(BIGQUERY_TIMEOUT_MS),
       });
 
       if (!response.ok) throw new Error(`BigQuery HTTP ${response.status}`);
@@ -405,7 +429,7 @@ const GoogleCloudService = (() => {
     const rows = [];
     const now = Date.now();
     for (let d = 0; d < daysBack; d++) {
-      const dayTimestamp = now - d * 86400000;
+      const dayTimestamp = now - d * MS_PER_DAY;
       rows.push({
         timestamp: new Date(dayTimestamp).toISOString(),
         avgDensity: 0.45 + Math.random() * 0.3,
@@ -460,7 +484,7 @@ const GoogleCloudService = (() => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ instances }),
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(VERTEX_AI_TIMEOUT_MS),
       });
 
       if (!response.ok) throw new Error(`Vertex AI HTTP ${response.status}`);
@@ -529,7 +553,7 @@ const GoogleCloudService = (() => {
     });
 
     if (perf.memory) {
-      metrics.memoryUsedMB = Math.round(perf.memory.usedJSHeapSize / 1048576);
+      metrics.memoryUsedMB = Math.round(perf.memory.usedJSHeapSize / BYTES_TO_MB);
     }
 
     // Custom marks timing
@@ -575,7 +599,7 @@ const GoogleCloudService = (() => {
       revision: _config.revision,
       timestamp: new Date().toISOString(),
       checks,
-      uptime: Math.round(performance.now() / 1000),
+      uptime: Math.round(performance.now() / MS_TO_SECONDS),
       metrics: getPerformanceMetrics(),
     };
 
